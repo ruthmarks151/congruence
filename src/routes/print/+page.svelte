@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { loadSave } from '$lib/saves';
+	import TokenDescription from '$lib/components/token_description.svelte'
+
+
 	const currentSave = loadSave();
 	let statements_with_index = currentSave.statements.map((statement, index): [string, number] => [
 		statement,
@@ -8,9 +11,25 @@
 	statements_with_index.sort((a, b) => b[0].length - a[0].length);
 </script>
 
-<h2>Printable Cards</h2>
 
-<div class={statements_with_index.length == 100 ? 'container california' : 'container iasr'}>
+
+<main>
+
+	<TokenDescription title="Printable Cards">
+		<p class="body-4">
+			You'll do sorts with printed out cards on a flat surface, then take a picture to import the results
+		</p>
+
+		<button 
+			class="button-3 filled blue" 
+			style="margin-block: var(--space-6); width: 150px;"
+			onclick={()=> window.print()}
+		>
+				Print
+		</button>
+	</TokenDescription>
+
+<div style="margin-top: var(--space-8)" class={statements_with_index.length == 100 ? 'container california' : 'container iasr'}>
 	{#each statements_with_index as [statement, index]}
 		{@const [body, notes] = statement.split('(N', 2)}
 		<p>
@@ -25,6 +44,8 @@
 		</p>
 	{/each}
 </div>
+
+</main>
 
 <style lang="scss">
 	@media print {

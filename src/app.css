@@ -1,0 +1,106 @@
+@import 'modern-normalize' layer(normalize);
+@import 'tundra-css' layer(tundra);
+
+@layer reset {
+	* {
+		margin: 0;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6,
+	p {
+		text-wrap: pretty;
+	}
+
+	a,
+	label {
+		cursor: pointer;
+	}
+}
+
+/* Any global styles should come after this */
+
+:root {
+	--app-accent: var(--green-5);
+	--app-foreground: var(--neutral-1);
+	--app-background: var(--neutral-9);
+}
+
+html {
+	color: var(--app-foreground);
+}
+
+html,
+body {
+	min-height: 100svh;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+main {
+	width: 100%;
+	max-width: 1400px;
+	padding-block: var(--space-8);
+	padding-inline: var(--space-10);
+	margin-inline: auto;
+}
+
+code {
+	background-color: var(--neutral-9);
+	color: var(--app-accent);
+	padding-inline: var(--space-2);
+	padding-block: var(--space-1);
+	border-radius: var(--radius-1);
+}
+
+hr {
+	border: 0.5px solid var(--neutral-8);
+}
+
+a {
+	display: flex;
+	gap: var(--space-2);
+	color: var(--app-accent);
+	text-decoration: none;
+
+	&:hover {
+		text-decoration: underline;
+	}
+
+	&::after {
+		content: '→';
+	}
+
+	&.external::after {
+		transform: rotate(-45deg);
+	}
+}
+
+.swatch-grid {
+	display: grid;
+	grid-template-columns: repeat(var(--columns, 5), 1fr);
+	gap: var(--space-1);
+}
+
+@media screen and (max-width: 1100px) {
+	.swatch-grid {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+@media screen and (max-width: 600px) {
+	.swatch-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media screen and (max-width: 400px) {
+	.swatch-grid {
+		grid-template-columns: repeat(1, 1fr);
+	}
+}

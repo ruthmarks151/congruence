@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as R from 'ramda';
+	import TokenDescription from '$lib/components/token_description.svelte'
 
 	import StatementBucket from './StatementBucket.svelte';
 	import { loadSave, doSave } from '$lib/saves';
@@ -36,7 +37,7 @@
 
 	$: console.log(binnedStatements);
 
-	const onImgLoad = (e: Event & { currentTarget: EventTarget & Element }) => {
+	const onImgLoad = async (e: Event & { currentTarget: EventTarget & Element }) => {
 		loading = true;
 		const imgViewer = e.currentTarget as unknown as HTMLImageElement;
 		const ctx = canvasElement?.getContext('2d');
@@ -131,16 +132,25 @@
 	};
 </script>
 
-<div class="container">
-	<h2>Scan A Collection of Cards</h2>
+<main>
+	<TokenDescription title="Scan A Sort">
+		<p class="body-4 desc">
+			After sorting the cards, take a picture from above and upload it here
+		</p>
+	</TokenDescription>
 	<div style="overflow: hidden; max-width: 1025px; height: 16px;">
 		<img src={imgSrc} on:load={onImgLoad} on:click={onImgLoad} alt="Your uploaded file" />
 	</div>
 	<p>
 		{loading ? 'Loading...' : 'Select Image :'}
-		<input
+
+
+		<label>
+			Image File
+			<input
 			type="file"
 			id="fileInput"
+			class="input-1"
 			name="file"
 			on:change={({ currentTarget }) => {
 				if ('files' in currentTarget && currentTarget.files?.length) {
@@ -148,12 +158,17 @@
 				}
 			}}
 		/>
-		<label>Sort Subject</label>
-		<input bind:value={subject} />
+		</label>
+
+		<label>
+			Sort Subject
+			<input class="input-2" bind:value={subject} />
+		</label>
+		
 	</p>
-	<h2>Annotated</h2>
+	<h2 class="alt-heading-2">Annotated</h2>
 	<canvas style="max-width: 1024px;" width="4032" height="3024" bind:this={canvasElement} />
-	<h3>Unsorted</h3>
+	<h3 class="heading-3">Unsorted</h3>
 	<StatementBucket
 		statements={unsorted}
 		{maxBin}
@@ -164,9 +179,12 @@
 		}}
 	/>
 	{#each binnedStatements as binContents, binId}
-		<h3>
-			Bin {binId + 1} <button on:click={() => addBinAt(binId)}>Insert Empty Bin Above</button>
-		</h3>
+		<div style="display: flex; flex-direction: row;">
+			<h3 class="heading-3">
+				Bin {binId + 1} 
+			</h3>
+			<button class="button-1" on:click={() => addBinAt(binId)}>Insert Empty Bin Above</button>
+		</div>
 		<StatementBucket
 			statements={(binContents ?? []).map((id) => currentSort.statements[id]) ?? []}
 			{maxBin}
@@ -178,6 +196,7 @@
 		/>
 	{/each}
 	<button
+		class="button-3 green"
 		disabled={!binVector ||
 			binVector?.length !== currentSort.statements.length ||
 			!isComplete(binVector)}
@@ -199,11 +218,4 @@
 	>
 		Save
 	</button>
-</div>
-
-<style>
-	.container {
-		margin: auto;
-		text-align: center;
-	}
-</style>
+</main>

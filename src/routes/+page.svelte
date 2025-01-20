@@ -1,92 +1,151 @@
-<script lang="ts">
-	import { browser } from '$app/environment';
-	import { templates, isSave, doSave } from '$lib/saves';
-	let tempText = (browser && window.localStorage.getItem('WorkingSave')) || '';
-	const parseSave = (text: string): null | Save => {
-		let parsedObj;
-		try {
-			parsedObj = JSON.parse(text);
-		} catch (error) {
-			return null;
-		}
-		return isSave(parsedObj) ? parsedObj : null;
-	};
-	const isValid = (text: string) => {
-		return parseSave(text) != null;
-	};
+<script>
+	import LinkCard from '$lib/components/link_card.svelte';
 </script>
 
-<svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
-</svelte:head>
+<div class="grid">
+	<header>
+		<h1 class="alt-heading-6">Congruence</h1>
+		<p class="body-4">
+			A tool for psychological assessment and personality discovery based on the work of Carl Rogers
+		</p>
 
-<section>
-	<h1>Q-Sort 2</h1>
-	<div class="row" style="justify-content: flex-start">
-		<span> Load Template </span>
-		{#each Object.entries(templates) as [name, obj]}
-			<button
-				on:click={() => {
-					tempText = JSON.stringify(obj, null, '  ');
-				}}
-			>
-				{name}
-			</button>
-		{/each}
-	</div>
-	<textarea bind:value={tempText} class={isValid(tempText) ? 'valid' : 'invalid'} />
-	<div class="row" style="justify-content: flex-end">
-		<button
-			disabled={!isValid(tempText)}
-			on:click={() => {
-				const maybeSave = parseSave(tempText);
-				if (maybeSave) doSave(maybeSave);
-			}}
-		>
-			Set Working Save
-		</button>
-		<a
-			href={'data:text/plain;charset=utf-8,' + encodeURIComponent(tempText)}
-			download="Backup.json"
-		>
-			Download Backup
-		</a>
-	</div>
-</section>
+		<p class="body-4">
+			This technique was used to assess the efficacy of psychotherapy was the Q-Sort. This requires
+			the subject to sort self-describing statements (e.g., "I have a great deal of confidence in my
+			abilities") into 9 categories according to how well or poorly the statements describe the
+			individual. Rogers generally asked clients to complete the QSort twice: Once sorting the
+			statements according to how they saw themselves (the self sort), and again according to how
+			they would like to be (the ideal sort). Rogers found that the two sorts became more similar as
+			therapy progressed, with both changing to resemble the other.
+		</p>
 
-<style lang="scss">
-	section {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		flex: 0.6;
+		<LinkCard href="/print" title="Print Cards" desc="Select a set of statements and print them" />
+	</header>
+
+	<main>
+		<h2 class="heading-4">Get Started</h2>
+		<p class="body-3">Print the cards to do a sort, or upload a save file</p>
+		<nav>
+			<menu>
+				<li>
+					<LinkCard
+						href="/saves"
+						title="Save/Load"
+						desc="Load an existing set of results from a file"
+					/>
+				</li>
+				<li>
+					<LinkCard href="/scan" title="Scan" desc="Scan a sort you've performed" />
+				</li>
+			</menu>
+		</nav>
+
+		<h2 class="heading-4">Analysis</h2>
+		<p class="body-3">Examine the sorts you've done through various lenses</p>
+		<nav>
+			<menu>
+				<li>
+					<LinkCard
+						href="/compare"
+						title="Compare Two Sorts"
+						desc="Compare two sorts, side by side with congruence computed"
+					/>
+				</li>
+				<li>
+					<LinkCard
+						href="/time"
+						title="Statements Over Time"
+						desc="Examine how the relevance of statements changes over time"
+					/>
+				</li>
+				<li>
+					<LinkCard
+						href="/congruence"
+						title="Congruence Over Time"
+						desc="Examine how the congruence of two subjects changes over time"
+					/>
+				</li>
+			</menu>
+		</nav>
+	</main>
+</div>
+
+<style>
+	.grid {
+		display: grid;
+		grid-template-columns: 1.5fr 2fr;
+		min-height: 100vh;
+		min-height: 100lvh;
+		gap: var(--space-12);
+	}
+
+	header {
+		position: sticky;
+		top: 0;
+		height: fit-content;
+		padding-block: var(--space-14);
+		padding-inline-start: var(--space-12);
 	}
 
 	h1 {
-		width: 100%;
+		margin-block-end: var(--space-6);
+		color: var(--app-accent);
 	}
 
-	textarea {
-		width: 100%;
-		height: 20em;
-		max-width: 1024px;
-		margin: 4px 0;
-		border: 2px solid;
-		&.valid {
-			border-color: green;
-		}
-		&.invalid {
-			border-color: red;
-		}
-	}
-
-	div.row {
-		width: 100%;
+	main {
 		display: flex;
-		flex-direction: row;
-		gap: 4px;
+		flex-direction: column;
 		align-items: center;
+		justify-content: center;
+		padding-block-start: var(--space-14);
+		max-width: 800px;
+		padding-inline-start: 0;
+		padding-inline-end: var(--space-12);
+	}
+
+	@media screen and (max-width: 700px) {
+		header,
+		main {
+			grid-column: 1 / 3;
+			padding-block: 0;
+			padding-inline: var(--space-8);
+		}
+
+		header {
+			position: static;
+			padding-block-start: var(--space-12);
+		}
+	}
+
+	nav,
+	h2 {
+		width: 100%;
+	}
+
+	menu {
+		margin-block-end: var(--space-4);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+		list-style: none;
+		padding: 0;
+	}
+
+	h2 {
+		margin-block-start: var(--space-10);
+		margin-block-end: var(--space-2);
+	}
+
+	h2:first-of-type {
+		margin-block-start: 0;
+	}
+
+	.body-3 {
+		width: 100%;
+		margin-block-end: var(--space-3);
+	}
+
+	header p {
+		margin-block: var(--space-6);
 	}
 </style>
