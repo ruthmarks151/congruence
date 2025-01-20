@@ -3,12 +3,13 @@
 		href: string;
 		title: string;
 		desc: string;
+		danger?: boolean;
 	}
 
-	let { href, title, desc }: Props = $props();
+	let { href, title, desc, danger }: Props = $props();
 </script>
 
-<a {href}>
+<a {href} class={danger ? 'danger' : ''}>
 	<h3 class="heading-2">{title}</h3>
 	<p class="label-2">{desc}</p>
 </a>
@@ -47,6 +48,17 @@
 			inset var(--space-2) var(--space-1) var(--space-3) oklch(from var(--blue-8) l c h / 10%);
 		background-color: oklch(from var(--blue-9) l c h / 40%);
 		border-color: var(--blue-9);
+		transform: translate(0, calc(var(--space-1) * -1));
+		text-decoration: none;
+	}
+
+	a.danger {
+		box-shadow:
+			0 var(--space-1) var(--space-2) oklch(from var(--neutral-1) l c h / 5%),
+			0 0 var(--space-1) oklch(from var(--neutral-1) l c h / 10%),
+			inset var(--space-2) var(--space-1) var(--space-3) oklch(from var(--blue-8) l c h / 10%);
+		background-color: oklch(from var(--orange-7) l c h / 40%);
+		border-color: var(--orange-7);
 		transform: translate(0, calc(var(--space-1) * -1));
 		text-decoration: none;
 	}

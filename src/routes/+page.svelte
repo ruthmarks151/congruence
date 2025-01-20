@@ -1,6 +1,9 @@
 <script>
 	import { base } from '$app/paths';
+	import { browser } from '$app/environment';
 	import LinkCard from '$lib/components/link_card.svelte';
+
+	let saveExists = $derived(!!browser && window.localStorage.getItem('WorkingSave'));
 </script>
 
 <div class="grid">
@@ -36,7 +39,10 @@
 					<LinkCard
 						href="{base}/saves"
 						title="Save/Load"
-						desc="Load an existing set of results from a file"
+						desc={saveExists
+							? 'Load an existing set of results from a file'
+							: "No save is currently loaded, the app won't work right until you upload one, or pick a template"}
+						danger={!saveExists}
 					/>
 				</li>
 				<li>
