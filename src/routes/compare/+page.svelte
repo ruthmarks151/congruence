@@ -2,8 +2,6 @@
 	import TokenDescription from '$lib/components/token_description.svelte';
 	import { calcCongruence, loadSave } from '$lib/saves';
 	import { descriptivenessQuotient } from '$lib/sort_utils';
-	// import { Scatter } from 'svelte-chartjs';
-	import 'chart.js/auto';
 	import { tail } from 'ramda';
 
 	const currentSave = loadSave();

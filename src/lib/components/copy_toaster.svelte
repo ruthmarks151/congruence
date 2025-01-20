@@ -1,34 +1,34 @@
 <script module lang="ts">
 	export interface CopiedValue {
-		value: string
-		success: boolean
+		value: string;
+		success: boolean;
 	}
 </script>
 
 <script lang="ts">
-	import { fly } from 'svelte/transition'
-	import Toast from './toast.svelte'
+	import { fly } from 'svelte/transition';
+	import Toast from './toast.svelte';
 
 	interface Props {
-		copiedValue: CopiedValue | undefined
+		copiedValue: CopiedValue | undefined;
 	}
 
-	let { copiedValue = $bindable() }: Props = $props()
-	let timer: ReturnType<typeof setTimeout> | undefined = $state()
+	let { copiedValue = $bindable() }: Props = $props();
+	let timer: ReturnType<typeof setTimeout> | undefined = $state();
 
 	$effect(() => {
 		if (copiedValue && copiedValue.success) {
 			timer = setTimeout(() => {
-				copiedValue = undefined
-			}, 2000)
+				copiedValue = undefined;
+			}, 2000);
 		}
 
 		return () => {
 			if (timer) {
-				clearTimeout(timer)
+				clearTimeout(timer);
 			}
-		}
-	})
+		};
+	});
 </script>
 
 {#key copiedValue}

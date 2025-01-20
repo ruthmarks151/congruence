@@ -1,27 +1,28 @@
 <script lang="ts">
-	import NavMenu from './nav_menu.svelte'
+	import { base } from '$app/paths';
+	import NavMenu from './nav_menu.svelte';
 
-	let headerHeight: number = $state(0)
-	let currentPosition: number = $state(0)
-	let prevPosition: number = 0
+	let headerHeight: number = $state(0);
+	let currentPosition: number = $state(0);
+	let prevPosition: number = 0;
 
 	function shouldHideHeader(currentYPosition: number): boolean {
 		if (currentPosition < 200) {
-			return false
+			return false;
 		}
 
-		const positionDelta = prevPosition - currentPosition
-		prevPosition = currentYPosition
-		return positionDelta < 0
+		const positionDelta = prevPosition - currentPosition;
+		prevPosition = currentYPosition;
+		return positionDelta < 0;
 	}
 
-	let hide = $derived(shouldHideHeader(currentPosition))
+	let hide = $derived(shouldHideHeader(currentPosition));
 </script>
 
 <svelte:window bind:scrollY={currentPosition} />
 
 <header bind:clientHeight={headerHeight} style="--header-height:{headerHeight}px" class:hide>
-	<a href="/" class="alt-heading-3">Congruence</a>
+	<a href="{base}/" class="alt-heading-3">Congruence</a>
 
 	<NavMenu />
 </header>

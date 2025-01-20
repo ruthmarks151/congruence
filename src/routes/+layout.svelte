@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { onNavigate } from '$app/navigation'
-	import { page } from '$app/stores'
-	import NavHeader from '$lib/components/header/nav_header.svelte'
-	import '../app.css'
+	import { onNavigate } from '$app/navigation';
+	import { page } from '$app/stores';
+	import NavHeader from '$lib/components/header/nav_header.svelte';
+	import '../app.css';
 	interface Props {
-		children?: import('svelte').Snippet
+		children?: import('svelte').Snippet;
 	}
 
-	let { children }: Props = $props()
+	let { children }: Props = $props();
 
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) {
-			return
+			return;
 		}
 
 		return new Promise((resolve) => {
 			document.startViewTransition(async () => {
-				resolve()
-				await navigation.complete
-			})
-		})
-	})
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 </script>
 
 <svelte:head>
@@ -35,9 +35,7 @@
 
 <footer>
 	<h3>
-		<a class="link-4 external" href="#">
-			q sort
-		</a>
+		<a class="link-4 external" href="#"> q sort </a>
 	</h3>
 </footer>
 

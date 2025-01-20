@@ -1,13 +1,13 @@
 <script lang="ts">
 	import * as R from 'ramda';
-	import TokenDescription from '$lib/components/token_description.svelte'
+	import TokenDescription from '$lib/components/token_description.svelte';
 
 	import StatementBucket from './StatementBucket.svelte';
 	import { loadSave, doSave } from '$lib/saves';
 
 	const currentSort = loadSave();
 
-	let imgSrc = 'src/lib/images/IMG_2332.png';
+	let imgSrc = '';
 	let subject = '';
 	let loading = false;
 	let canvasElement: null | HTMLCanvasElement = null;
@@ -134,9 +134,7 @@
 
 <main>
 	<TokenDescription title="Scan A Sort">
-		<p class="body-4 desc">
-			After sorting the cards, take a picture from above and upload it here
-		</p>
+		<p class="body-4 desc">After sorting the cards, take a picture from above and upload it here</p>
 	</TokenDescription>
 	<div style="overflow: hidden; max-width: 1025px; height: 16px;">
 		<img src={imgSrc} on:load={onImgLoad} on:click={onImgLoad} alt="Your uploaded file" />
@@ -144,27 +142,25 @@
 	<p>
 		{loading ? 'Loading...' : 'Select Image :'}
 
-
 		<label>
 			Image File
 			<input
-			type="file"
-			id="fileInput"
-			class="input-1"
-			name="file"
-			on:change={({ currentTarget }) => {
-				if ('files' in currentTarget && currentTarget.files?.length) {
-					imgSrc = URL.createObjectURL(currentTarget.files[0]);
-				}
-			}}
-		/>
+				type="file"
+				id="fileInput"
+				class="input-1"
+				name="file"
+				on:change={({ currentTarget }) => {
+					if ('files' in currentTarget && currentTarget.files?.length) {
+						imgSrc = URL.createObjectURL(currentTarget.files[0]);
+					}
+				}}
+			/>
 		</label>
 
 		<label>
 			Sort Subject
 			<input class="input-2" bind:value={subject} />
 		</label>
-		
 	</p>
 	<h2 class="alt-heading-2">Annotated</h2>
 	<canvas style="max-width: 1024px;" width="4032" height="3024" bind:this={canvasElement} />
@@ -181,7 +177,7 @@
 	{#each binnedStatements as binContents, binId}
 		<div style="display: flex; flex-direction: row;">
 			<h3 class="heading-3">
-				Bin {binId + 1} 
+				Bin {binId + 1}
 			</h3>
 			<button class="button-1" on:click={() => addBinAt(binId)}>Insert Empty Bin Above</button>
 		</div>

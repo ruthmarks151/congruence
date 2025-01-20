@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
-	const dispatch = createEventDispatcher()
+	import { createEventDispatcher } from 'svelte';
+	const dispatch = createEventDispatcher();
 
 	interface Props {
-		type: 'success' | 'danger'
-		showClose?: boolean
-		children?: import('svelte').Snippet
+		type: 'success' | 'danger';
+		showClose?: boolean;
+		children?: import('svelte').Snippet;
 	}
 
-	let { type, showClose = false, children }: Props = $props()
+	let { type, showClose = false, children }: Props = $props();
 </script>
 
 <aside>

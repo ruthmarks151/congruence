@@ -1,36 +1,36 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
+	import { createEventDispatcher } from 'svelte';
 	interface Props {
-		property: string
-		level: number
-		children?: import('svelte').Snippet
+		property: string;
+		level: number;
+		children?: import('svelte').Snippet;
 	}
 
-	let { property, level, children }: Props = $props()
-	let element: HTMLDivElement | undefined = $state()
+	let { property, level, children }: Props = $props();
+	let element: HTMLDivElement | undefined = $state();
 
 	let colourValue = $derived(
-		element && getComputedStyle(element).getPropertyValue(`--${property}-${level}`),
-	)
+		element && getComputedStyle(element).getPropertyValue(`--${property}-${level}`)
+	);
 
 	function copyOnEnter(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
-			copyValue()
+			copyValue();
 		}
 	}
 
-	const dispatch = createEventDispatcher()
+	const dispatch = createEventDispatcher();
 
 	function copyValue() {
-		const value = `var(--${property}-${level})`
+		const value = `var(--${property}-${level})`;
 		navigator.clipboard
 			.writeText(value)
 			.then(() => {
-				dispatch('copied_value', { value, success: true })
+				dispatch('copied_value', { value, success: true });
 			})
 			.catch(() => {
-				dispatch('copied_value', { value, success: false })
-			})
+				dispatch('copied_value', { value, success: false });
+			});
 	}
 </script>
 

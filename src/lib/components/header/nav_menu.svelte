@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { page } from '$app/stores';
 
 	let showMenu = $state(false);
@@ -35,27 +36,27 @@
 	{#if showMenu}
 		<menu>
 			<li aria-current={$page.url.pathname === '/' ? 'page' : undefined}>
-				<a onclick={hideMenu} class="link-3" href="/">Home</a>
+				<a onclick={hideMenu} class="link-3" href="{base}/">Home</a>
 			</li>
 			<li aria-current={$page.url.pathname.startsWith('/saves') ? 'page' : undefined}>
-				<a onclick={hideMenu} class="link-3" href="/saves">Save/Load</a>
+				<a onclick={hideMenu} class="link-3" href="{base}/saves">Save/Load</a>
 			</li>
 			<li aria-current={$page.url.pathname.startsWith('/print') ? 'page' : undefined}>
-				<a onclick={hideMenu} class="link-3" href="/print">Print Cards</a>
+				<a onclick={hideMenu} class="link-3" href="{base}/print">Print Cards</a>
 			</li>
 			<hr />
 			<li aria-current={$page.url.pathname.startsWith('/scan') ? 'page' : undefined}>
-				<a onclick={hideMenu} class="link-3" href="/scan">Scan a Sort</a>
+				<a onclick={hideMenu} class="link-3" href="{base}/scan">Scan a Sort</a>
 			</li>
 			<hr />
 			<li aria-current={$page.url.pathname === '/compare' ? 'page' : undefined}>
-				<a onclick={hideMenu} class="link-3" href="/compare">Compare Two Sorts</a>
+				<a onclick={hideMenu} class="link-3" href="{base}/compare">Compare Two Sorts</a>
 			</li>
 			<li aria-current={$page.url.pathname === '/time' ? 'page' : undefined}>
-				<a onclick={hideMenu} class="link-3" href="/time">Statements Over Time</a>
+				<a onclick={hideMenu} class="link-3" href="{base}/time">Statements Over Time</a>
 			</li>
 			<li aria-current={$page.url.pathname === '/congruence' ? 'page' : undefined}>
-				<a onclick={hideMenu} class="link-3" href="/congruence">Congruence Over Time</a>
+				<a onclick={hideMenu} class="link-3" href="/{base}congruence">Congruence Over Time</a>
 			</li>
 		</menu>
 	{/if}

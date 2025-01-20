@@ -1,42 +1,42 @@
 <script lang="ts">
-	import { goto } from '$app/navigation'
-	import { page } from '$app/stores'
-	import { browser } from '$app/environment'
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { browser } from '$app/environment';
 
-	const colours = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink']
-	let selectedColour = $state($page.url.searchParams.get('colour'))
+	const colours = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink'];
+	let selectedColour = $state($page.url.searchParams.get('colour'));
 	interface Props {
-		updateColour: (newColour: string) => void
+		updateColour: (newColour: string) => void;
 	}
 
-	let { updateColour }: Props = $props()
+	let { updateColour }: Props = $props();
 
 	function updateQueryColour(newColour: string | null) {
-		const pageColour = $page.url.searchParams.get('colour')
+		const pageColour = $page.url.searchParams.get('colour');
 		if (newColour === pageColour) {
-			return
+			return;
 		}
 
 		if (newColour) {
-			$page.url.searchParams.set('colour', newColour)
+			$page.url.searchParams.set('colour', newColour);
 		} else {
-			$page.url.searchParams.delete('colour')
+			$page.url.searchParams.delete('colour');
 		}
 
 		if (browser) {
-			goto($page.url, { replaceState: true, keepFocus: true, noScroll: true })
+			goto($page.url, { replaceState: true, keepFocus: true, noScroll: true });
 		}
 	}
 
 	$effect(() => {
-		updateColour(selectedColour ?? '')
-		updateQueryColour(selectedColour)
-	})
+		updateColour(selectedColour ?? '');
+		updateQueryColour(selectedColour);
+	});
 
-	type ClickEvent = MouseEvent & { currentTarget: EventTarget & HTMLInputElement }
+	type ClickEvent = MouseEvent & { currentTarget: EventTarget & HTMLInputElement };
 	function resetSelectedColour(event: ClickEvent) {
 		if (event.currentTarget.value === selectedColour) {
-			selectedColour = null
+			selectedColour = null;
 		}
 	}
 </script>

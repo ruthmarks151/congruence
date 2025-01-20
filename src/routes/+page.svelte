@@ -1,4 +1,5 @@
 <script>
+	import { base } from '$app/paths';
 	import LinkCard from '$lib/components/link_card.svelte';
 </script>
 
@@ -19,7 +20,11 @@
 			therapy progressed, with both changing to resemble the other.
 		</p>
 
-		<LinkCard href="/print" title="Print Cards" desc="Select a set of statements and print them" />
+		<LinkCard
+			href="{base}/print"
+			title="Print Cards"
+			desc="Select a set of statements and print them"
+		/>
 	</header>
 
 	<main>
@@ -29,13 +34,13 @@
 			<menu>
 				<li>
 					<LinkCard
-						href="/saves"
+						href="{base}/saves"
 						title="Save/Load"
 						desc="Load an existing set of results from a file"
 					/>
 				</li>
 				<li>
-					<LinkCard href="/scan" title="Scan" desc="Scan a sort you've performed" />
+					<LinkCard href="{base}/scan" title="Scan" desc="Scan a sort you've performed" />
 				</li>
 			</menu>
 		</nav>
@@ -46,21 +51,21 @@
 			<menu>
 				<li>
 					<LinkCard
-						href="/compare"
+						href="{base}/compare"
 						title="Compare Two Sorts"
 						desc="Compare two sorts, side by side with congruence computed"
 					/>
 				</li>
 				<li>
 					<LinkCard
-						href="/time"
+						href="{base}/time"
 						title="Statements Over Time"
 						desc="Examine how the relevance of statements changes over time"
 					/>
 				</li>
 				<li>
 					<LinkCard
-						href="/congruence"
+						href="{base}/congruence"
 						title="Congruence Over Time"
 						desc="Examine how the congruence of two subjects changes over time"
 					/>

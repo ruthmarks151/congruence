@@ -7,40 +7,37 @@
 </script>
 
 <div>
-{#each statements as statement}
-<div class="StatementBox" style="display: flex; flex-direction: column;">
-		<div style="display: flex; flex-direction: row;">
-			<span style="body-2">
-				Move to:
-			</span>
-			<select
-			 	class="input-2"
-				on:change={(e) => {
-					const moveTo = e.currentTarget.value == '' ? NaN : Number(e.currentTarget.value);
-					if (!isNaN(moveTo)) {
-						onMoveRequested(statement, moveTo);
-						e.currentTarget.value = '';
-					}
-				}}
-			>
-				<option value={null} />
-				{#each binIds as binId}
-					<option value={binId}>Bin {binId + 1}</option>
-				{/each}
-			</select>
-			<button
-				style="button-2"
-				on:click={() => {
-					onMoveRequested(statement, undefined);
-				}}>X</button
-			>
-			<br />
+	{#each statements as statement}
+		<div class="StatementBox" style="display: flex; flex-direction: column;">
+			<div style="display: flex; flex-direction: row;">
+				<span style="body-2"> Move to: </span>
+				<select
+					class="input-2"
+					on:change={(e) => {
+						const moveTo = e.currentTarget.value == '' ? NaN : Number(e.currentTarget.value);
+						if (!isNaN(moveTo)) {
+							onMoveRequested(statement, moveTo);
+							e.currentTarget.value = '';
+						}
+					}}
+				>
+					<option value={null} />
+					{#each binIds as binId}
+						<option value={binId}>Bin {binId + 1}</option>
+					{/each}
+				</select>
+				<button
+					style="button-2"
+					on:click={() => {
+						onMoveRequested(statement, undefined);
+					}}>X</button
+				>
+				<br />
 			</div>
-		<p>
-			{statement}
-		</p>
+			<p>
+				{statement}
+			</p>
 		</div>
-
 	{/each}
 </div>
 
