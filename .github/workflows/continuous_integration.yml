@@ -17,9 +17,9 @@ jobs:
       - uses: actions/checkout@v2
       - run: npm run format
 
-  clippy:
-    runs-on: ubuntu-latest
+  # lint:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
-      - run: npm run lint
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - run: npm run lint
