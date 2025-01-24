@@ -56,7 +56,7 @@
 				<a onclick={hideMenu} class="link-3" href="{base}/time">Statements Over Time</a>
 			</li>
 			<li aria-current={$page.url.pathname === '/congruence' ? 'page' : undefined}>
-				<a onclick={hideMenu} class="link-3" href="/{base}congruence">Congruence Over Time</a>
+				<a onclick={hideMenu} class="link-3" href="{base}/congruence">Congruence Over Time</a>
 			</li>
 		</menu>
 	{/if}
