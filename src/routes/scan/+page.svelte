@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as R from 'ramda';
 	import TokenDescription from '$lib/components/token_description.svelte';
+	import { dropzone, draggable } from '$lib/dnd';
 
 	import StatementBucket from './StatementBucket.svelte';
 	import { loadSave, doSave } from '$lib/saves';
@@ -11,7 +12,7 @@
 	let subject = '';
 	let loading = false;
 	let canvasElement: null | HTMLCanvasElement = null;
-	let binVector: null | (number | undefined)[];
+	let binVector: null | (number | undefined)[] = [];
 
 	$: maxBin = R.reduce(
 		R.max<number>,
@@ -22,20 +23,21 @@
 		binVector = binVector?.map((b) => (b == undefined || b < i ? b : b + 1)) ?? null;
 	};
 	const isComplete = (bins: (number | undefined)[]): bins is number[] => !bins.includes(undefined);
-	$: unsorted = currentSort.statements.filter((_, i) => binVector && binVector[i] == undefined);
-	$: binnedStatements = currentSort.statements.reduce((bins: number[][], s, i) => {
-		if (!binVector) {
+	$: unsorted = currentSort.statements.filter((_, i) => !binVector || binVector[i] == undefined);
+	$: binnedStatements = currentSort.statements.reduce(
+		(bins: number[][], s, i) => {
+			if (!binVector) {
+				return bins;
+			}
+			let binIndex = binVector[i];
+			if (binIndex == undefined) {
+				return bins;
+			}
+			bins[binIndex] = [...(bins[binIndex] ?? []), i];
 			return bins;
-		}
-		let binIndex = binVector[i];
-		if (binIndex == undefined) {
-			return bins;
-		}
-		bins[binIndex] = [...(bins[binIndex] ?? []), i];
-		return bins;
-	}, []);
-
-	$: console.log(binnedStatements);
+		},
+		[[], [], [], [], []]
+	);
 
 	const onImgLoad = async (e: Event & { currentTarget: EventTarget & Element }) => {
 		loading = true;
@@ -163,7 +165,7 @@
 		</label>
 	</p>
 	<h2 class="alt-heading-2">Annotated</h2>
-	<canvas style="max-width: 1024px;" width="4032" height="3024" bind:this={canvasElement} />
+	<canvas style="max-width: 100%;" width="4032" height="3024" bind:this={canvasElement} />
 	<h3 class="heading-3">Unsorted</h3>
 	<StatementBucket
 		statements={unsorted}
@@ -174,23 +176,48 @@
 			binVector[statememntId] = binId;
 		}}
 	/>
-	{#each binnedStatements as binContents, binId}
-		<div style="display: flex; flex-direction: row;">
-			<h3 class="heading-3">
-				Bin {binId + 1}
-			</h3>
-			<button class="button-1" on:click={() => addBinAt(binId)}>Insert Empty Bin Above</button>
-		</div>
-		<StatementBucket
-			statements={(binContents ?? []).map((id) => currentSort.statements[id]) ?? []}
-			{maxBin}
-			onMoveRequested={(statement, binId) => {
-				let statememntId = R.indexOf(statement, currentSort.statements);
-				if (statememntId < 0 || !binVector) return;
-				binVector[statememntId] = binId;
-			}}
-		/>
-	{/each}
+	<div
+		style="display: flex; flex-direction: row; max-width: 100%; width: 100%; overflow-x: scroll; gap: var(--space-2); margin-top: var(--space-2); padding: var(--space-2);"
+	>
+		{#each binnedStatements as binContents, binId}
+			<div
+				class="column"
+				use:dropzone={{
+					dragover_class: 'droppable',
+					on_dropzone(statement: string) {
+						let statememntId = R.indexOf(statement, currentSort.statements);
+						if (statememntId < 0 || !binVector) return;
+						binVector[statememntId] = binId;
+					}
+				}}
+			>
+				<div style="display: flex; flex-direction: row;">
+					<button
+						class="button-1 filled green"
+						style="padding: none; margin: auto; margin-left: 0;"
+						on:click={() => addBinAt(binId - 1)}>＋</button
+					>
+					<h3 class="heading-3" style="margin: auto;">
+						Bin {binId + 1}
+					</h3>
+					<button
+						class="button-1 filled green"
+						style="padding: none; margin: auto; margin-right: 0;"
+						on:click={() => addBinAt(binId)}>＋</button
+					>
+				</div>
+				<StatementBucket
+					statements={(binContents ?? []).map((id) => currentSort.statements[id]) ?? []}
+					{maxBin}
+					onMoveRequested={(statement, binId) => {
+						let statememntId = R.indexOf(statement, currentSort.statements);
+						if (statememntId < 0 || !binVector) return;
+						binVector[statememntId] = binId;
+					}}
+				/>
+			</div>
+		{/each}
+	</div>
 	<button
 		class="button-3 green"
 		disabled={!binVector ||
@@ -215,3 +242,21 @@
 		Save
 	</button>
 </main>
+
+<style lang="scss">
+	.column {
+		outline: 2px solid var(--neutral-2);
+		min-height: 100px;
+		flex-grow: 1;
+		max-width: max(20%, 15em);
+		padding: var(--space-1);
+	}
+	.column:global(.droppable) {
+		outline: 3px solid var(--orange-5);
+		outline-offset: 0.25rem;
+	}
+
+	.column:global(.droppable) * {
+		pointer-events: none;
+	}
+</style>

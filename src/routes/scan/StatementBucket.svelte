@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { draggable } from '$lib/dnd';
 	import * as R from 'ramda';
 	export let statements: string[];
 	export let maxBin: number;
@@ -8,52 +9,28 @@
 
 <div>
 	{#each statements as statement}
-		<div class="StatementBox" style="display: flex; flex-direction: column;">
-			<div style="display: flex; flex-direction: row;">
-				<span style="body-2"> Move to: </span>
-				<select
-					class="input-2"
-					on:change={(e) => {
-						const moveTo = e.currentTarget.value == '' ? NaN : Number(e.currentTarget.value);
-						if (!isNaN(moveTo)) {
-							onMoveRequested(statement, moveTo);
-							e.currentTarget.value = '';
-						}
-					}}
-				>
-					<option value={null} />
-					{#each binIds as binId}
-						<option value={binId}>Bin {binId + 1}</option>
-					{/each}
-				</select>
-				<button
-					style="button-2"
-					on:click={() => {
-						onMoveRequested(statement, undefined);
-					}}>X</button
-				>
-				<br />
-			</div>
-			<p>
-				{statement}
-			</p>
-		</div>
+		<p style="width: max-content; max-width: 100%;" use:draggable={statement} unselectable>
+			{statement}
+		</p>
 	{/each}
 </div>
 
 <style lang="scss">
 	div {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		display: flex;
+		flex-direction: column;
 		gap: 0.5em;
-		.StatementBox {
+		width: 100%;
+		p {
 			border: 1px solid black;
 			line-height: 1;
 			font-size: 0.8em;
 			margin: 0;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			height: 60px;
+			min-height: 60px;
+			-webkit-user-select: none; /* Safari */
+			-moz-user-select: none; /* Firefox */
+			-ms-user-select: none; /* IE10+/Edge */
+			user-select: none; /* Standard */
 		}
 	}
 </style>
