@@ -1,7 +1,7 @@
 <script lang="ts">
 	import TokenDescription from '$lib/components/token_description.svelte';
 	import { browser } from '$app/environment';
-	import { templates, isSave, doSave } from '$lib/saves';
+	import { templates, isSave, doSave } from '$lib/saves.svelte';
 	let tempText = (browser && window.localStorage.getItem('WorkingSave')) || '';
 	const parseSave = (text: string): null | Save => {
 		let parsedObj;

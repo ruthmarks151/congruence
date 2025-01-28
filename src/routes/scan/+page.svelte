@@ -4,7 +4,7 @@
 	import { dropzone, draggable } from '$lib/dnd';
 
 	import StatementBucket from './StatementBucket.svelte';
-	import { loadSave, doSave } from '$lib/saves';
+	import { loadSave, doSave } from '$lib/saves.svelte';
 
 	const currentSort = loadSave();
 

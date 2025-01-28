@@ -36,6 +36,15 @@ export const correl = (xs: number[], ys: number[]) => {
 };
 import { browser } from '$app/environment';
 
+export let statementSets: unknown[] = $state([]);
+let sorts = $state([] as Sort[]);
+
+export const getSorts = () => sorts;
+
+export const setSorts = (newSorts: Sort[]) => {
+	sorts = newSorts;
+};
+
 export const loadSave = (): Save => {
 	const tempText = (browser && window.localStorage.getItem('WorkingSave')) || '';
 	let parsedObj;

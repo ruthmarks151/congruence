@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { descriptivenessQuotient } from '$lib/sort_utils';
-	import { correl, loadSave } from '$lib/saves';
+	import { correl, loadSave } from '$lib/saves.svelte';
 	import * as R from 'ramda';
 	import TokenDescription from '$lib/components/token_description.svelte';
 	const currentSave = loadSave();

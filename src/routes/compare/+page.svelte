@@ -1,6 +1,6 @@
 <script lang="ts">
 	import TokenDescription from '$lib/components/token_description.svelte';
-	import { calcCongruence, loadSave } from '$lib/saves';
+	import { calcCongruence, loadSave } from '$lib/saves.svelte';
 	import { descriptivenessQuotient } from '$lib/sort_utils';
 	import { tail } from 'ramda';
 

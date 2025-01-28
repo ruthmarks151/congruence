@@ -2,8 +2,8 @@
 	import * as R from 'ramda';
 
 	import { descriptivenessQuotient } from '$lib/sort_utils';
-	import { calcCongruence, loadSave } from '$lib/saves';
-	import type { Sort } from '$lib/saves';
+	import { calcCongruence, loadSave } from '$lib/saves.svelte';
+	import type { Sort } from '$lib/saves.svelte';
 	const currentSave = loadSave();
 
 	let subjects = [...new Set(currentSave.sorts.map((s) => s.subject))];
