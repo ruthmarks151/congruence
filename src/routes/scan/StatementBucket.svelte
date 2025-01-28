@@ -3,7 +3,7 @@
 	import * as R from 'ramda';
 	export let statements: string[];
 	export let maxBin: number;
-	export let onMoveRequested: (statement: string, binId: number | undefined) => void;
+	// export const onMoveRequested: (statement: string, binId: number | undefined) => void;
 	$: binIds = R.range(0, maxBin + 1);
 </script>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { loadSave } from '$lib/saves';
+	import { loadSave } from '$lib/saves.svelte';
 	import TokenDescription from '$lib/components/token_description.svelte';
 
 	const currentSave = loadSave();

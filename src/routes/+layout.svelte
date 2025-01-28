@@ -2,6 +2,8 @@
 	import { onNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import NavHeader from '$lib/components/header/nav_header.svelte';
+	import { onGapiScriptLoaded, onGisScriptLoaded } from '$lib/googleAuth.svelte';
+
 	import '../app.css';
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -25,6 +27,9 @@
 
 <svelte:head>
 	<title>Congruence</title>
+
+	<script src="https://apis.google.com/js/api.js" onload={onGapiScriptLoaded}></script>
+	<script src="https://accounts.google.com/gsi/client" onload={onGisScriptLoaded}></script>
 </svelte:head>
 
 {#if !$page.data.hideHeader}
