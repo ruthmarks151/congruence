@@ -2,9 +2,11 @@
 	import { onNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import NavHeader from '$lib/components/header/nav_header.svelte';
-	import { onGapiScriptLoaded, onGisScriptLoaded } from '$lib/googleAuth.svelte';
+	import { onGapiScriptLoaded, onGisScriptLoaded, tryFreeLogin } from '$lib/googleAuth.svelte';
+	import { onMount } from 'svelte';
 
 	import '../app.css';
+	import { loadSheet } from '$lib/sheetLogic.svelte';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}

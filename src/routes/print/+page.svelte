@@ -1,13 +1,25 @@
 <script lang="ts">
 	import { loadSave } from '$lib/saves.svelte';
 	import TokenDescription from '$lib/components/token_description.svelte';
+	import { sheetState } from '$lib/sheetLogic.svelte';
 
-	const currentSave = loadSave();
-	let statements_with_index = currentSave.statements.map((statement, index): [string, number] => [
-		statement,
-		index
-	]);
-	statements_with_index.sort((a, b) => b[0].length - a[0].length);
+	const statementSets = $derived(sheetState.state == null ? [] : sheetState.state.statementSets);
+
+	let statementSetName = $state(statementSets.length > 0 ? statementSets[0].statementSet : '');
+	$effect(() => {
+		if (statementSetName == '') {
+			statementSetName = statementSets.length > 0 ? statementSets[0].statementSet : '';
+		}
+	});
+
+	let statements_with_index = $derived(
+		(
+			statementSets.find((set) => set.statementSet == statementSetName) ?? { statements: [] }
+		).statements.map((statement, index): [string, number] => [statement, index])
+	);
+	$effect(() => {
+		statements_with_index.sort((a, b) => b[0].length - a[0].length);
+	});
 </script>
 
 <main>
@@ -16,7 +28,11 @@
 			You'll do sorts with printed out cards on a flat surface, then take a picture to import the
 			results
 		</p>
-
+		<select bind:value={statementSetName}>
+			{#each statementSets as statementSet}
+				<option value={statementSet.statementSet}>{statementSet.statementSet}</option>
+			{/each}
+		</select>
 		<button
 			class="button-3 filled blue"
 			style="margin-block: var(--space-6); width: 150px;"

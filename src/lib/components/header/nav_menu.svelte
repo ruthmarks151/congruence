@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import { page } from '$app/stores';
+	import { handleAuth } from '$lib/googleAuth.svelte';
+	import { sheetState, pickAndLoadSpreadsheet } from '$lib/sheetLogic.svelte';
 
 	let showMenu = $state(false);
 
@@ -58,6 +60,14 @@
 			<li aria-current={$page.url.pathname === '/congruence' ? 'page' : undefined}>
 				<a onclick={hideMenu} class="link-3" href="{base}/congruence">Congruence Over Time</a>
 			</li>
+			<hr />
+			{#if gapi.client.getToken() == null}
+				<li><a class="link-3" onclick={() => handleAuth()}>Login</a></li>
+			{:else}
+				<li>
+					<a class="link-3" onclick={() => pickAndLoadSpreadsheet()}>Pick New Sheet </a>
+				</li>
+			{/if}
 		</menu>
 	{/if}
 </nav>
@@ -143,7 +153,8 @@
 		}
 	}
 
-	a {
+	a,
+	.link-3 {
 		position: relative;
 		display: flex;
 		justify-content: space-between;
