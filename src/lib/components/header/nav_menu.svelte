@@ -61,13 +61,9 @@
 				<a onclick={hideMenu} class="link-3" href="{base}/congruence">Congruence Over Time</a>
 			</li>
 			<hr />
-			{#if gapi.client.getToken() == null}
-				<li><a class="link-3" onclick={() => handleAuth()}>Login</a></li>
-			{:else}
-				<li>
-					<a class="link-3" onclick={() => pickAndLoadSpreadsheet()}>Pick New Sheet </a>
-				</li>
-			{/if}
+			<li>
+				<a class="link-3" onclick={() => pickAndLoadSpreadsheet()}>Pick New Sheet </a>
+			</li>
 		</menu>
 	{/if}
 </nav>

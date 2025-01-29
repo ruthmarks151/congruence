@@ -4,7 +4,7 @@ import { effect } from 'effect/Layer';
 import type { Sort } from './saves.svelte.svelte';
 import { number } from 'effect/Equivalence';
 import { onMount } from 'svelte';
-import { onGoogleReadies, pickSpreadsheet } from './googleAuth.svelte';
+import { pickSpreadsheet } from './googleAuth.svelte';
 
 const spreadsheetIdKey = 'spreadsheetId';
 
@@ -189,5 +189,3 @@ export const loadSheet = async (id: GoogleSheetId | null = null) => {
 };
 
 export const pickAndLoadSpreadsheet = () => pickSpreadsheet(loadSheet);
-
-onGoogleReadies.push(loadSheet);

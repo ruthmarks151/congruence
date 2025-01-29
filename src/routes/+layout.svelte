@@ -6,7 +6,7 @@
 	import { onMount } from 'svelte';
 
 	import '../app.css';
-	import { loadSheet } from '$lib/sheetLogic.svelte';
+	import { pickAndLoadSpreadsheet, sheetState } from '$lib/sheetLogic.svelte';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
@@ -38,7 +38,15 @@
 	<NavHeader />
 {/if}
 
-{@render children?.()}
+{#if sheetState.state == null}
+	We need a google sheet to save data in.
+
+	<button class="button-4 filled green" onclick={() => pickAndLoadSpreadsheet()}
+		>Login and Pick a Sheet
+	</button>
+{:else}
+	{@render children?.()}
+{/if}
 
 <footer>
 	<h3>

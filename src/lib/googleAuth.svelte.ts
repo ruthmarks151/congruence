@@ -5,6 +5,7 @@ import {
 } from '$env/static/public';
 import type { picker } from 'google-one-tap';
 import type { GoogleSheetId } from './googleSheetsWrapper';
+import { loadSheet } from './sheetLogic.svelte';
 // Discovery doc URL for APIs used by the quickstart
 const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
 
@@ -21,6 +22,11 @@ let gisInited = $state(false);
 let pickerInited = $state(false);
 let driveInited = $state(false);
 
+const maybeTryLogin = () => {
+	if (gisInited && gapiInited && driveInited)
+		loadSheet().then((success) => console.log('loadSheet', success));
+};
+
 /**
  * Callback after the API client is loaded. Loads the
  * discovery doc to initialize the API.
@@ -35,6 +41,7 @@ async function onGapiClientLoaded() {
 
 	gapi.client.load('drive', 'v2', () => {
 		driveInited = true;
+		maybeTryLogin();
 	});
 
 	gapi.load('picker', onPickerApiLoad);
@@ -44,9 +51,7 @@ async function onGapiClientLoaded() {
 	}
 
 	gapiInited = true;
-	for (const f of onGoogleReadies) {
-		await f();
-	}
+	maybeTryLogin();
 }
 
 /**
@@ -67,6 +72,7 @@ export const onGisScriptLoaded = () => {
 		callback: '' // defined later
 	});
 	gisInited = true;
+	maybeTryLogin();
 };
 
 export const tryFreeLogin = () =>
@@ -142,5 +148,3 @@ export const pickSpreadsheet = async (
 		.build();
 	picker.setVisible(true);
 };
-
-export const onGoogleReadies: (() => Promise<unknown>)[] = [tryFreeLogin];
