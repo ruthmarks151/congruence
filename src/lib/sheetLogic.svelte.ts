@@ -163,12 +163,13 @@ const ensureAllSheetsExist = (id: GoogleSheetId) =>
 	);
 
 export const loadSheet = async (id: GoogleSheetId | null = null) => {
-	const savedSpreadsheetId = localStorage.getItem(spreadsheetIdKey) as GoogleSheetId | null;
+	const savedSpreadsheetId = JSON.parse(localStorage.getItem(spreadsheetIdKey) ?? '""');
 	if (id != null) {
 		localStorage.setItem(spreadsheetIdKey, JSON.stringify(id));
-	} else if (savedSpreadsheetId != null) {
+	} else if (savedSpreadsheetId != '') {
 		id = savedSpreadsheetId;
 	} else {
+		console.error('Error loading sheet no key exists');
 		return false;
 	}
 
@@ -182,6 +183,7 @@ export const loadSheet = async (id: GoogleSheetId | null = null) => {
 			},
 			onFailure(cause) {
 				sheetState.state = null;
+				console.error(`Error loading sheet ${cause}`);
 				return false;
 			}
 		})

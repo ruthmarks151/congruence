@@ -5,7 +5,7 @@ export type GoogleSheetId = string & { readonly __brand: unique symbol };
 export const fetchDocument = (id: GoogleSheetId) =>
 	Effect.tryPromise({
 		try: () => gapi.client.sheets.spreadsheets.get({ spreadsheetId: id, includeGridData: true }),
-		catch: (err: unknown) => err
+		catch: (err: unknown) => ({ id, err })
 	}).pipe(
 		Effect.flatMap(({ status, result }) => {
 			if (status != 200) {
