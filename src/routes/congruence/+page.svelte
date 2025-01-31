@@ -2,14 +2,10 @@
 	import * as R from 'ramda';
 
 	import { descriptivenessQuotient } from '$lib/sort_utils';
-	import { calcCongruence, loadSave } from '$lib/saves.svelte';
-	import type { Sort } from '$lib/saves.svelte';
-	const currentSave = loadSave();
+	import { calcCongruence, type Sort } from '$lib/saves.svelte';
 
-	let subjects = [...new Set(currentSave.sorts.map((s) => s.subject))];
-	subjects.sort();
-	let leftSubject = $state(subjects[1]);
-	let rightSubject = $state(subjects[0]);
+	let leftSubject = $state(sortState.current.subjects[1]);
+	let rightSubject = $state(sortState.current.subjects[0]);
 
 	let points = $derived(
 		R.reduce<
@@ -32,11 +28,9 @@
 				if (lastLeft && lastRight) {
 					const leftDq = lastLeft.descriptivenessQuotient;
 					const rightDq = lastRight.descriptivenessQuotient;
-					zippedRows = currentSave.statements.map((s, i): [string, number, number] => [
-						s,
-						leftDq[i],
-						rightDq[i]
-					]);
+					zippedRows = sortState.current.statementSet!.statements.map(
+						(s, i): [string, number, number] => [s, leftDq[i], rightDq[i]]
+					);
 				} else {
 					zippedRows = undefined;
 				}
@@ -65,7 +59,7 @@
 				points: []
 			},
 			R.sortBy(R.prop('sortedOn'), [
-				...currentSave.sorts
+				...sortState.current.sorts
 					.filter((s) => s.subject == leftSubject || s.subject == rightSubject)
 					.map((s) => ({
 						...s,
@@ -78,6 +72,7 @@
 	import * as Plot from '@observablehq/plot';
 	import * as d3 from 'd3';
 	import TokenDescription from '$lib/components/token_description.svelte';
+	import { sortState } from '$lib/sheetLogic.svelte';
 
 	let div: HTMLElement | undefined;
 
@@ -126,7 +121,7 @@
 		<div style="display: flex; flex-direction: row;">
 			<div>
 				<select class="input-2" bind:value={leftSubject}>
-					{#each subjects as subject}
+					{#each sortState.current.subjects as subject}
 						<option value={subject}>
 							{subject}
 						</option>
@@ -135,7 +130,7 @@
 			</div>
 			<div>
 				<select class="input-2" bind:value={rightSubject}>
-					{#each subjects as subject}
+					{#each sortState.current.subjects as subject}
 						<option value={subject}>
 							{subject}
 						</option>

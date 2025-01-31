@@ -5,7 +5,7 @@ import {
 } from '$env/static/public';
 import type { picker } from 'google-one-tap';
 import type { GoogleSheetId } from './googleSheetsWrapper';
-import { loadSheet } from './sheetLogic.svelte';
+import { loadSheet, pickAndLoadSpreadsheet } from './sheetLogic.svelte';
 // Discovery doc URL for APIs used by the quickstart
 const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
 
@@ -24,7 +24,7 @@ let driveInited = $state(false);
 
 const maybeTryLogin = () => {
 	if (gisInited && gapiInited && driveInited)
-		loadSheet().then((success) => console.log('loadSheet', success));
+		pickAndLoadSpreadsheet().then((success) => console.log('loadSheet', success));
 };
 
 /**

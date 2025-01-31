@@ -1,4 +1,4 @@
-type DraggableParams = string
+type DraggableParams = string;
 
 export function draggable(node: HTMLElement, data: DraggableParams) {
 	let state: DraggableParams = data;
@@ -25,13 +25,13 @@ export function draggable(node: HTMLElement, data: DraggableParams) {
 }
 
 interface DropzoneProps {
-	dropEffect: DataTransfer["dropEffect"];
+	dropEffect: DataTransfer['dropEffect'];
 	dragover_class: string;
 	on_dropzone?: (data: string, e: DragEvent) => void;
 }
 
 export function dropzone(node: HTMLElement, options: Partial<DropzoneProps>) {
-	const dropzoneClass = "dropzone";
+	const dropzoneClass = 'dropzone';
 	node.classList.add(dropzoneClass);
 	let depth = 0;
 	let state: DropzoneProps = {
@@ -44,9 +44,9 @@ export function dropzone(node: HTMLElement, options: Partial<DropzoneProps>) {
 		if (!(e.target instanceof HTMLElement)) return;
 		if (e.target.classList.contains(dropzoneClass)) {
 			e.target.classList.add(state.dragover_class);
-			depth = 0
+			depth = 0;
 		} else {
-			depth++
+			depth++;
 		}
 	}
 
@@ -55,7 +55,7 @@ export function dropzone(node: HTMLElement, options: Partial<DropzoneProps>) {
 		if (depth == 0) {
 			e.target.classList.remove(state.dragover_class);
 		} else {
-			depth--
+			depth--;
 		}
 	}
 
@@ -70,7 +70,7 @@ export function dropzone(node: HTMLElement, options: Partial<DropzoneProps>) {
 		if (!e.dataTransfer) return;
 		const data = e.dataTransfer.getData('text/plain');
 		if (!(e.target instanceof HTMLElement)) return;
-		depth = 0
+		depth = 0;
 		e.target.classList.remove(state.dragover_class);
 		state.on_dropzone?.(data, e);
 	}
@@ -91,7 +91,7 @@ export function dropzone(node: HTMLElement, options: Partial<DropzoneProps>) {
 
 		destroy() {
 			node.classList.remove(dropzoneClass);
-			node.classList.remove(state.dragover_class)
+			node.classList.remove(state.dragover_class);
 			node.removeEventListener('dragenter', handle_dragenter);
 			node.removeEventListener('dragleave', handle_dragleave);
 			node.removeEventListener('dragover', handle_dragover);

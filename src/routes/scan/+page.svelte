@@ -5,8 +5,9 @@
 
 	import StatementBucket from './StatementBucket.svelte';
 	import { loadSave, doSave } from '$lib/saves.svelte';
+	import { sortState } from '$lib/sheetLogic.svelte';
 
-	const currentSort = loadSave();
+	// const currentSort = loadSave();
 
 	let imgSrc = '';
 	let subject = '';
@@ -23,8 +24,10 @@
 		binVector = binVector?.map((b) => (b == undefined || b < i ? b : b + 1)) ?? null;
 	};
 	const isComplete = (bins: (number | undefined)[]): bins is number[] => !bins.includes(undefined);
-	$: unsorted = currentSort.statements.filter((_, i) => !binVector || binVector[i] == undefined);
-	$: binnedStatements = currentSort.statements.reduce(
+	$: unsorted = sortState.current!.statementSet!.statements.filter(
+		(_, i) => !binVector || binVector[i] == undefined
+	);
+	$: binnedStatements = sortState.current!.statementSet!.statements.reduce(
 		(bins: number[][], s, i) => {
 			if (!binVector) {
 				return bins;
@@ -171,7 +174,7 @@
 		statements={unsorted}
 		{maxBin}
 		onMoveRequested={(statement, binId) => {
-			let statememntId = R.indexOf(statement, currentSort.statements);
+			let statememntId = R.indexOf(statement, sortState.current!.statementSet!.statements);
 			if (statememntId < 0 || !binVector) return;
 			binVector[statememntId] = binId;
 		}}
@@ -185,7 +188,7 @@
 				use:dropzone={{
 					dragover_class: 'droppable',
 					on_dropzone(statement: string) {
-						let statememntId = R.indexOf(statement, currentSort.statements);
+						let statememntId = R.indexOf(statement, sortState.current!.statementSet!.statements);
 						if (statememntId < 0 || !binVector) return;
 						binVector[statememntId] = binId;
 					}
@@ -207,10 +210,12 @@
 					>
 				</div>
 				<StatementBucket
-					statements={(binContents ?? []).map((id) => currentSort.statements[id]) ?? []}
+					statements={(binContents ?? []).map(
+						(id) => sortState.current!.statementSet!.statements[id]
+					) ?? []}
 					{maxBin}
 					onMoveRequested={(statement, binId) => {
-						let statememntId = R.indexOf(statement, currentSort.statements);
+						let statememntId = R.indexOf(statement, sortState.current!.statementSet!.statements);
 						if (statememntId < 0 || !binVector) return;
 						binVector[statememntId] = binId;
 					}}
@@ -221,14 +226,14 @@
 	<button
 		class="button-3 green"
 		disabled={!binVector ||
-			binVector?.length !== currentSort.statements.length ||
+			binVector?.length !== sortState.current!.statementSet!.statements.length ||
 			!isComplete(binVector)}
 		on:click={() => {
 			if (binVector && isComplete(binVector))
 				doSave({
-					statements: currentSort.statements,
+					statements: sortState.current!.statementSet!.statements,
 					sorts: [
-						...currentSort.sorts,
+						...sortState.current!.sorts,
 						{
 							extras: {},
 							sortedOn: new Date().toISOString(),

@@ -10,7 +10,7 @@
 		"sourceMap": true,
 		"strict": true,
 		"types": [
-			"gapi", 
+			"gapi",
 			"gapi.oauth2",
 			"gapi.client.drive",
 			"gapi.client.sheets",
@@ -18,7 +18,7 @@
 			"google-one-tap",
 			"google.accounts",
 			"google.picker",
-			"google.sheets",
+			"google.sheets"
 		]
 	}
 	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias

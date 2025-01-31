@@ -1,44 +1,32 @@
 <script lang="ts">
 	import TokenDescription from '$lib/components/token_description.svelte';
-	import { calcCongruence, loadSave } from '$lib/saves.svelte';
+	import { calcCongruence } from '$lib/saves.svelte';
 	import { descriptivenessQuotient } from '$lib/sort_utils';
-	import { tail } from 'ramda';
+	import * as R from 'ramda';
+	import { sortState } from '$lib/sheetLogic.svelte';
 
-	const currentSave = loadSave();
 	let sorts = $derived([
-		...currentSave.sorts.map((s) => ({
+		...sortState.current.sorts.map((s) => ({
 			...s,
 			descriptivenessQuotient: descriptivenessQuotient(s.statementPositions)
 		}))
 	]);
-	$effect(() => {
-		sorts.sort(({ sortedOn: a }, { sortedOn: b }) => {
-			if (a < b) {
-				return -1;
-			}
-			if (a > b) {
-				return 1;
-			}
-			// names must be equal
-			return 0;
-		});
-	});
-	let subjects = [...new Set(sorts.map((s) => s.subject))];
-	subjects.sort();
-	let leftSubject = $state(subjects[1]);
-	let rightSubject = $state(subjects[0]);
+	let leftSubject = $state(sortState.current.subjects[1]);
+	let rightSubject = $state(sortState.current.subjects[0]);
 
 	let leftDates = $derived(
-		sorts.filter(({ subject }) => subject == leftSubject).map((s) => s.sortedOn)
+		sortState.current.sorts.filter(({ subject }) => subject == leftSubject).map((s) => s.sortedOn)
 	);
 	let rightDates = $derived(
-		sorts.filter(({ subject }) => subject == rightSubject).map((s) => s.sortedOn)
+		sortState.current.sorts.filter(({ subject }) => subject == rightSubject).map((s) => s.sortedOn)
 	);
 	let leftDate = $state(
-		sorts.filter(({ subject }) => subject == leftSubject).splice(-1)[0]?.sortedOn ?? ''
+		sortState.current.sorts.filter(({ subject }) => subject == leftSubject).splice(-1)[0]
+			?.sortedOn ?? ''
 	);
 	let rightDate = $state(
-		sorts.filter(({ subject }) => subject == rightSubject).splice(-1)[0]?.sortedOn ?? ''
+		sortState.current.sorts.filter(({ subject }) => subject == rightSubject).splice(-1)[0]
+			?.sortedOn ?? ''
 	);
 
 	let leftSort = $derived(
@@ -50,11 +38,13 @@
 
 	let zippedRows = $derived(
 		(() => {
-			let zippedRows = currentSave.statements.map((s, i): [string, number, number] => [
-				s,
-				leftSort?.descriptivenessQuotient?.[i] ?? 0.5,
-				rightSort?.descriptivenessQuotient?.[i] ?? 0.5
-			]);
+			let zippedRows = sortState.current!.statementSet!.statements.map(
+				(s, i): [string, number, number] => [
+					s,
+					leftSort?.descriptivenessQuotient?.[i] ?? 0.5,
+					rightSort?.descriptivenessQuotient?.[i] ?? 0.5
+				]
+			);
 			zippedRows.sort((a, b) => Math.abs(b[1] - b[2]) - Math.abs(a[1] - a[2]));
 			return zippedRows;
 		})()
@@ -164,7 +154,7 @@
 						leftDate = leftDates[leftDates.length - 1];
 					}}
 				>
-					{#each subjects as subject, i}
+					{#each sortState.current?.subjects as subject, i}
 						<option value={subject}>
 							{subject}
 						</option>
@@ -189,7 +179,7 @@
 						rightDate = rightDates[rightDates.length - 1];
 					}}
 				>
-					{#each subjects as subject}
+					{#each sortState.current?.subjects as subject}
 						<option value={subject}>
 							{subject}
 						</option>

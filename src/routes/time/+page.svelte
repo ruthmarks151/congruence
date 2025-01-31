@@ -3,15 +3,15 @@
 	import { correl, loadSave } from '$lib/saves.svelte';
 	import * as R from 'ramda';
 	import TokenDescription from '$lib/components/token_description.svelte';
-	const currentSave = loadSave();
 
-	let sorts = [
-		...currentSave.sorts.map((s) => ({
+	let sorts = $derived(
+		sortState.current!.sorts.map((s) => ({
 			...s,
 			descriptivenessQuotient: descriptivenessQuotient(s.statementPositions)
 		}))
-	];
-	sorts.sort(({ sortedOn: a }, { sortedOn: b }) => {
+	);
+
+	sortState.current!.sorts.sort(({ sortedOn: a }, { sortedOn: b }) => {
 		if (a < b) {
 			return -1;
 		}
@@ -28,8 +28,8 @@
 	);
 
 	let includedLines: [string, number][] = $state([
-		['ideal', 0],
-		['ideal', 42]
+		['My Ideal Self', 0],
+		['My Ideal Self', 42]
 	]);
 	subjects.sort();
 
@@ -39,7 +39,7 @@
 			data: sorts
 				.filter((s) => s.subject == subject)
 				.map((s) => ({
-					label: `${subject} ${currentSave.statements[statementIndex]}`,
+					label: `${subject} ${sortState.current!.statementSet!.statements[statementIndex]}`,
 					x: new Date(s.sortedOn),
 					y: s.descriptivenessQuotient[statementIndex]
 				}))
@@ -68,15 +68,18 @@
 						)
 					}),
 					{} as Record<number, number>,
-					R.range(0, currentSave.statements.length)
+					R.range(0, sortState.current!.statementSet!.statements.length)
 				)
 			}),
 			{} as Record<number, Record<number, number>>,
-			R.range(0, currentSave.statements.length)
+			R.range(0, sortState.current!.statementSet!.statements.length)
 		)
 	);
 	let pairs = $derived(
-		R.xprod(R.range(0, currentSave.statements.length), R.range(0, currentSave.statements.length))
+		R.xprod(
+			R.range(0, sortState.current!.statementSet!.statements.length),
+			R.range(0, sortState.current!.statementSet!.statements.length)
+		)
 	);
 
 	let correlRows = $derived(
@@ -86,8 +89,8 @@
 				(row: [string, string, number]) => Math.abs(row[2]) > 0.5,
 				R.map(
 					(row: [number, number]): [string, string, number] => [
-						currentSave.statements[row[0]],
-						currentSave.statements[row[1]],
+						sortState.current!.statementSet!.statements[row[0]],
+						sortState.current!.statementSet!.statements[row[1]],
 						correls[row[0]][row[1]]
 					],
 					R.filter(
@@ -104,6 +107,7 @@
 
 	import * as Plot from '@observablehq/plot';
 	import * as d3 from 'd3';
+	import { sortState } from '$lib/sheetLogic.svelte';
 
 	let div: HTMLElement | undefined;
 
@@ -177,8 +181,8 @@
 						class="button-1 outline blue"
 						onclick={() => {
 							includedLines = [
-								[covSubject, currentSave.statements.indexOf(s1)],
-								[covSubject, currentSave.statements.indexOf(s2)]
+								[covSubject, sortState.current!.statementSet!.statements.indexOf(s1)],
+								[covSubject, sortState.current!.statementSet!.statements.indexOf(s2)]
 							];
 						}}>Plot</button
 					>
@@ -198,8 +202,8 @@
 						class="button-1 outline blue"
 						onclick={() => {
 							includedLines = [
-								[covSubject, currentSave.statements.indexOf(s1)],
-								[covSubject, currentSave.statements.indexOf(s2)]
+								[covSubject, sortState.current!.statementSet!.statements.indexOf(s1)],
+								[covSubject, sortState.current!.statementSet!.statements.indexOf(s2)]
 							];
 						}}>Plot</button
 					>
@@ -222,7 +226,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each currentSave.statements as statement, statementIndex}
+			{#each sortState.current!.statementSet!.statements as statement, statementIndex}
 				<tr>
 					<td>{statement}</td>
 					{#each subjects as subject}
@@ -255,16 +259,16 @@
 			<thead>
 				<tr>
 					<td></td>
-					{#each currentSave.statements as _col_statement, col_i}
+					{#each sortState.current!.statementSet!.statements as _col_statement, col_i}
 						<td>{col_i + 1}</td>
 					{/each}
 				</tr>
 			</thead>
 			<tbody>
-				{#each currentSave.statements as row_statement, row_i}
+				{#each sortState.current!.statementSet!.statements as row_statement, row_i}
 					<tr>
 						<td>{row_i + 1}</td>
-						{#each currentSave.statements as col_statement, col_i}
+						{#each sortState.current!.statementSet!.statements as col_statement, col_i}
 							{@const cov = correls[row_i][col_i]}
 							<td>
 								<div

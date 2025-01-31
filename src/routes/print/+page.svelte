@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { loadSave } from '$lib/saves.svelte';
 	import TokenDescription from '$lib/components/token_description.svelte';
-	import { sheetState } from '$lib/sheetLogic.svelte';
+	import { sortState } from '$lib/sheetLogic.svelte';
 
-	const statementSets = $derived(sheetState.state == null ? [] : sheetState.state.statementSets);
+	const statementSets = $derived(sortState.state!.statementSets);
 
 	let statementSetName = $state(statementSets.length > 0 ? statementSets[0].statementSet : '');
 	$effect(() => {
@@ -14,7 +13,9 @@
 
 	let statements_with_index = $derived(
 		(
-			statementSets.find((set) => set.statementSet == statementSetName) ?? { statements: [] }
+			statementSets.find((set) => set.statementSet == sortState.state!.currentSet) ?? {
+				statements: []
+			}
 		).statements.map((statement, index): [string, number] => [statement, index])
 	);
 	$effect(() => {
@@ -28,7 +29,7 @@
 			You'll do sorts with printed out cards on a flat surface, then take a picture to import the
 			results
 		</p>
-		<select bind:value={statementSetName}>
+		<select bind:value={sortState.state!.currentSet}>
 			{#each statementSets as statementSet}
 				<option value={statementSet.statementSet}>{statementSet.statementSet}</option>
 			{/each}

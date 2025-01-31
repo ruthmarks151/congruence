@@ -1,10 +1,10 @@
 import { Effect, Exit, Option, pipe } from 'effect';
 import { fetchDocument, createSheets, type GoogleSheetId } from './googleSheetsWrapper';
 import { effect } from 'effect/Layer';
-import type { Sort } from './saves.svelte.svelte';
 import { number } from 'effect/Equivalence';
 import { onMount } from 'svelte';
 import { pickSpreadsheet } from './googleAuth.svelte';
+import * as R from 'ramda';
 
 const spreadsheetIdKey = 'spreadsheetId';
 
@@ -24,12 +24,39 @@ interface StatementSet {
 	statements: string[];
 }
 
-class SheetState {
-	state = $state(null);
+interface Sort {
+	statementSet: string;
+	subject: string;
+	sortedOn: string;
+	note: string;
+	statementPositions: number[];
 }
 
-export const sheetState: { state: null | { sorts: Sort[]; statementSets: StatementSet[] } } =
-	new SheetState();
+class SortState {
+	all: null | { sorts: Sort[]; statementSets: StatementSet[] } = $state(null);
+	currentStatementSetName: string | null = $state(null);
+	current = $derived({
+		statementSet:
+			this.all?.statementSets.find(
+				({ statementSet }) => statementSet == this.currentStatementSetName
+			) ?? null,
+		sorts: R.sortBy(({ sortedOn }: Sort) => sortedOn)(
+			this.all?.sorts.filter(({ statementSet }) => statementSet == this.currentStatementSetName) ??
+				[]
+		),
+		subjects: [
+			...new Set([
+				...(this.all?.sorts
+					.filter(({ statementSet }) => statementSet == this.currentStatementSetName)
+					.map(({ subject }) => subject) ?? []),
+				'Myself',
+				'My Ideal Self'
+			])
+		]
+	});
+}
+
+export const sortState: SortState = new SortState();
 
 const sheetParams: Record<SheetId, SheetParams> = {
 	statementSets: {
@@ -131,14 +158,16 @@ const ensureAllSheetsExist = (id: GoogleSheetId) =>
 			({ headerLocationVectors: { sorts: sortHeaderVec }, sheets: { sorts: sortSheet } }) =>
 				extractGrid(sortSheet).pipe(
 					Effect.map(([_header, ...rows]) =>
-						rows.map((row) => ({
-							statementSet: String(row[sortHeaderVec[0]]),
-							subject: String(row[sortHeaderVec[1]]),
-							sortedOn: String(row[sortHeaderVec[2]]),
-							note: row[sortHeaderVec[3]],
-							statementPositions:
-								row?.slice(sortHeaderVec[4]).map((n) => parseInt(String(n), 10)) ?? []
-						}))
+						rows.map(
+							(row): Sort => ({
+								statementSet: String(row[sortHeaderVec[0]]),
+								subject: String(row[sortHeaderVec[1]]),
+								sortedOn: String(row[sortHeaderVec[2]]),
+								note: String(row[sortHeaderVec[3]]),
+								statementPositions:
+									row?.slice(sortHeaderVec[4]).map((n) => parseInt(String(n), 10)) ?? []
+							})
+						)
 					)
 				)
 		),
@@ -163,7 +192,9 @@ const ensureAllSheetsExist = (id: GoogleSheetId) =>
 	);
 
 export const loadSheet = async (id: GoogleSheetId | null = null) => {
-	const savedSpreadsheetId = JSON.parse(localStorage.getItem(spreadsheetIdKey) ?? '""');
+	const savedSpreadsheetId = JSON.parse(
+		localStorage.getItem(spreadsheetIdKey) ?? '""'
+	) as GoogleSheetId;
 	if (id != null) {
 		localStorage.setItem(spreadsheetIdKey, JSON.stringify(id));
 	} else if (savedSpreadsheetId != '') {
@@ -178,11 +209,22 @@ export const loadSheet = async (id: GoogleSheetId | null = null) => {
 	return sheetsExit.pipe(
 		Exit.match({
 			onSuccess({ sorts, statementSets }) {
-				sheetState.state = { sorts, statementSets };
+				sortState.all = { sorts, statementSets };
+				if (sortState.all?.statementSets) {
+					if (
+						!sortState.all.statementSets.some(
+							({ statementSet }) => statementSet == sortState.currentStatementSetName
+						)
+					) {
+						sortState.currentStatementSetName =
+							sortState.all.sorts[sortState.all.sorts.length - 1]?.statementSet ??
+							sortState.all.statementSets[0].statementSet;
+					}
+				}
 				return true;
 			},
 			onFailure(cause) {
-				sheetState.state = null;
+				sortState.all = null;
 				console.error(`Error loading sheet ${cause}`);
 				return false;
 			}
