@@ -3,7 +3,7 @@ import { fetchDocument, createSheets, type GoogleSheetId } from './googleSheetsW
 import { effect } from 'effect/Layer';
 import { number } from 'effect/Equivalence';
 import { onMount } from 'svelte';
-import { pickSpreadsheet } from './googleAuth.svelte';
+import { handleAuth, pickSpreadsheet } from './googleAuth.svelte';
 import * as R from 'ramda';
 
 const spreadsheetIdKey = 'spreadsheetId';
@@ -232,4 +232,13 @@ export const loadSheet = async (id: GoogleSheetId | null = null) => {
 	);
 };
 
-export const pickAndLoadSpreadsheet = () => pickSpreadsheet(loadSheet);
+export const pickAndLoadSpreadsheet = async () => {
+	const _auth = await handleAuth();
+	let success = false;
+	try {
+		success = await loadSheet();
+	} catch (e: unknown) {
+		success = false;
+	}
+	if (!success) await pickSpreadsheet(loadSheet);
+};
