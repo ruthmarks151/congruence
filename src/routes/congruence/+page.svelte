@@ -118,7 +118,7 @@
 			Compare the congruence of two sorting subjects (like the self and ideal) over time
 		</p>
 
-		<div style="display: flex; flex-direction: row;">
+		<div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: var(--space-1);">
 			<div>
 				<select class="input-2" bind:value={leftSubject}>
 					{#each sortState.current.subjects as subject}
@@ -143,6 +143,6 @@
 	<div
 		bind:this={div}
 		role="img"
-		style="width: 100%; max-width: 1024px; padding: var(--space-8);"
+		style="width: 100%; max-width: 1024px; padding: var(--space-2);"
 	></div>
 </main>

@@ -11,8 +11,8 @@
 			descriptivenessQuotient: descriptivenessQuotient(s.statementPositions)
 		}))
 	]);
-	let leftSubject = $state(sortState.current.subjects[1]);
-	let rightSubject = $state(sortState.current.subjects[0]);
+	let leftSubject = $state(sortState.current.subjects[0]);
+	let rightSubject = $state(sortState.current.subjects[1]);
 
 	let leftDates = $derived(
 		sortState.current.sorts.filter(({ subject }) => subject == leftSubject).map((s) => s.sortedOn)
@@ -235,9 +235,10 @@
 <style lang="scss">
 	div.wrapper {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(auto-fill, min(450px, 100%));
 		margin-top: var(--space-6);
 		margin-bottom: var(--space-6);
+		row-gap: var(--space-2);
 	}
 
 	.greytable {

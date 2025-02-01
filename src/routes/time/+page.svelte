@@ -159,7 +159,7 @@
 	<div
 		bind:this={div}
 		role="img"
-		style="width: 100%; max-width: 800px; padding: var(--space-8); margin: auto;"
+		style="width: 100%; max-width: 800px; padding: var(--space-2); margin: auto;"
 	></div>
 
 	<h2 class="heading-4" style="display: inline;">Examine Statement Correlations For &nbsp;</h2>
@@ -171,49 +171,67 @@
 		{/each}
 	</select>
 
-	<div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: var(--space-4)">
-		<h3 class="heading-3" style="grid-area: 1 / 1 / 1 / 1">Most Correlated Statements</h3>
-		<ul class="body-4" style="grid-area: 2 / 1 / 2 / 1">
-			{#each correlRows.filter(([, , r]) => r > 0) as [s1, s2, r]}
-				<li>
-					{r}
-					<button
-						class="button-1 outline blue"
-						onclick={() => {
-							includedLines = [
-								[covSubject, sortState.current!.statementSet!.statements.indexOf(s1)],
-								[covSubject, sortState.current!.statementSet!.statements.indexOf(s2)]
-							];
-						}}>Plot</button
-					>
-					<ul>
-						<li>{s1}</li>
-						<li>{s2}</li>
-					</ul>
-				</li>
-			{/each}
-		</ul>
-		<h3 class="heading-3" style="grid-area: 1 / 2 / 1 / 2">Most Anti-Correlated Statements</h3>
-		<ul class="body-4" style="grid-area: 2 / 2 / 2 / 2">
-			{#each correlRows.filter(([, , r]) => r < 0) as [s1, s2, r]}
-				<li>
-					{r}
-					<button
-						class="button-1 outline blue"
-						onclick={() => {
-							includedLines = [
-								[covSubject, sortState.current!.statementSet!.statements.indexOf(s1)],
-								[covSubject, sortState.current!.statementSet!.statements.indexOf(s2)]
-							];
-						}}>Plot</button
-					>
-					<ul>
-						<li>{s1}</li>
-						<li>{s2}</li>
-					</ul>
-				</li>
-			{/each}
-		</ul>
+	<div
+		style="display: flex; flex-direction: row; flex-wrap: wrap; gap: var(--space-4); grid-auto-flow: column;"
+	>
+		<div
+			style="flex-basis: 0;
+    flex-grow: 1;
+    min-width: 350px;
+    margin: auto;
+    margin-top: 0;"
+		>
+			<h3 class="heading-3">Most Correlated Statements</h3>
+			<ul class="body-4">
+				{#each correlRows.filter(([, , r]) => r > 0) as [s1, s2, r]}
+					<li>
+						{r}
+						<button
+							class="button-1 outline blue"
+							onclick={() => {
+								includedLines = [
+									[covSubject, sortState.current!.statementSet!.statements.indexOf(s1)],
+									[covSubject, sortState.current!.statementSet!.statements.indexOf(s2)]
+								];
+							}}>Plot</button
+						>
+						<ul>
+							<li>{s1}</li>
+							<li>{s2}</li>
+						</ul>
+					</li>
+				{/each}
+			</ul>
+		</div>
+		<div
+			style="flex-basis: 0;
+    flex-grow: 1;
+    min-width: 350px;
+    margin: auto;
+    margin-top: 0;"
+		>
+			<h3 class="heading-3">Most Anti-Correlated Statements</h3>
+			<ul class="body-4">
+				{#each correlRows.filter(([, , r]) => r < 0) as [s1, s2, r]}
+					<li>
+						{r}
+						<button
+							class="button-1 outline blue"
+							onclick={() => {
+								includedLines = [
+									[covSubject, sortState.current!.statementSet!.statements.indexOf(s1)],
+									[covSubject, sortState.current!.statementSet!.statements.indexOf(s2)]
+								];
+							}}>Plot</button
+						>
+						<ul>
+							<li>{s1}</li>
+							<li>{s2}</li>
+						</ul>
+					</li>
+				{/each}
+			</ul>
+		</div>
 	</div>
 
 	<table>
