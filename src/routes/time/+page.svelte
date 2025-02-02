@@ -1,26 +1,16 @@
 <script lang="ts">
 	import { descriptivenessQuotient } from '$lib/sort_utils';
-	import { correl, loadSave } from '$lib/saves.svelte';
+	import { correl, loadSave, type Sort } from '$lib/saves.svelte';
 	import * as R from 'ramda';
 	import TokenDescription from '$lib/components/token_description.svelte';
 
 	let sorts = $derived(
-		sortState.current!.sorts.map((s) => ({
+		R.sortBy(({ sortedOn }: Sort) => sortedOn)(sortState.current?.sorts ?? []).map((s) => ({
 			...s,
 			descriptivenessQuotient: descriptivenessQuotient(s.statementPositions)
 		}))
 	);
 
-	sortState.current!.sorts.sort(({ sortedOn: a }, { sortedOn: b }) => {
-		if (a < b) {
-			return -1;
-		}
-		if (a > b) {
-			return 1;
-		}
-		// names must be equal
-		return 0;
-	});
 	let subjects = [...new Set(sorts.map((s) => s.subject))];
 	let covSubject = $state(subjects[0]);
 	let covSamples = $derived(
@@ -33,13 +23,16 @@
 	]);
 	subjects.sort();
 
+	const getStatement = (index: number) =>
+		sortState.current?.statementSet?.statements?.[index] ?? String(index);
+
 	let data = $derived({
 		labels: sorts.map((s) => s.sortedOn),
 		datasets: includedLines.map(([subject, statementIndex]) => ({
 			data: sorts
 				.filter((s) => s.subject == subject)
 				.map((s) => ({
-					label: `${subject} ${sortState.current!.statementSet!.statements[statementIndex]}`,
+					label: `${subject} ${getStatement(statementIndex)}`,
 					x: new Date(s.sortedOn),
 					y: s.descriptivenessQuotient[statementIndex]
 				}))

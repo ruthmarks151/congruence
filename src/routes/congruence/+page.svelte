@@ -28,7 +28,7 @@
 				if (lastLeft && lastRight) {
 					const leftDq = lastLeft.descriptivenessQuotient;
 					const rightDq = lastRight.descriptivenessQuotient;
-					zippedRows = sortState.current.statementSet!.statements.map(
+					zippedRows = (sortState.current.statementSet?.statements ?? []).map(
 						(s, i): [string, number, number] => [s, leftDq[i], rightDq[i]]
 					);
 				} else {

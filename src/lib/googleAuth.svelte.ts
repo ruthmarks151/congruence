@@ -5,7 +5,7 @@ import {
 } from '$env/static/public';
 import type { picker } from 'google-one-tap';
 import type { GoogleSheetId } from './googleSheetsWrapper';
-import { loadSheet, pickAndLoadSpreadsheet } from './sheetLogic.svelte';
+import { loadSheet, loadSpreadsheetElsePick } from './sheetLogic.svelte';
 // Discovery doc URL for APIs used by the quickstart
 const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
 
@@ -17,14 +17,23 @@ const googleCredentialsKey = 'googleCredentials';
 
 let tokenClient: google.accounts.oauth2.TokenClient | undefined = $state(undefined);
 let accessToken = $state<string | null>(null);
+
 let gapiInited = $state(false);
 let gisInited = $state(false);
 let pickerInited = $state(false);
 let driveInited = $state(false);
 
+class Inited {
+	firstSheet = $state(false);
+}
+
+export const inited = new Inited();
+
 const maybeTryLogin = () => {
 	if (gisInited && gapiInited && driveInited)
-		pickAndLoadSpreadsheet().then((success) => console.log('loadSheet', success));
+		loadSpreadsheetElsePick().finally(() => {
+			inited.firstSheet = true;
+		});
 };
 
 /**
@@ -36,7 +45,7 @@ async function onGapiClientLoaded() {
 		apiKey: PUBLIC_GOOGLE_API_KEY,
 		discoveryDocs: [DISCOVERY_DOC]
 	});
-	let credentials = localStorage.getItem(googleCredentialsKey); // get your credentials from where you saved it
+	const credentials = localStorage.getItem(googleCredentialsKey) || 'null'; // get your credentials from where you saved it
 	if (credentials != null) gapi.client.setToken(JSON.parse(credentials)); // parse it if you got it as string
 
 	gapi.client.load('drive', 'v2', () => {
@@ -77,8 +86,14 @@ export const onGisScriptLoaded = () => {
 
 export const tryFreeLogin = () =>
 	new Promise<string | null>(async (res, rej) => {
-		if (!gapiInited || gapi.client.getToken() === null) {
+		if (!gapiInited) {
 			res(null);
+			return;
+		}
+		const token = await gapi.client.getToken();
+
+		if (token != null) {
+			res(token.access_token);
 			return;
 		}
 
@@ -86,7 +101,7 @@ export const tryFreeLogin = () =>
 			if (resp.error !== undefined) {
 				rej(resp.error);
 			} else {
-				localStorage.setItem(googleCredentialsKey, JSON.stringify(resp.access_token));
+				localStorage.setItem(googleCredentialsKey, JSON.stringify(resp));
 				res(resp.access_token as string);
 			}
 		};

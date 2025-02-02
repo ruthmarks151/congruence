@@ -1,4 +1,5 @@
 import { Effect } from 'effect';
+import { validDate } from 'effect/Schema';
 
 export type GoogleSheetId = string & { readonly __brand: unique symbol };
 
@@ -40,4 +41,28 @@ export const createSheets = (id: GoogleSheetId, sheets: { title: string }[]) =>
 			}
 			return Effect.succeed(result);
 		})
+	);
+
+export const appendRow = (id: GoogleSheetId, sheetId: number, row: string[]) =>
+	gapi.client.sheets.spreadsheets.batchUpdate(
+		{ spreadsheetId: id },
+		{
+			requests: [
+				{
+					appendCells: {
+						sheetId,
+						fields: 'userEnteredValue',
+						rows: [
+							{
+								values: row.map((stringValue) => ({
+									userEnteredValue: {
+										stringValue
+									}
+								}))
+							}
+						]
+					}
+				}
+			]
+		}
 	);

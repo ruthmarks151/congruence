@@ -38,7 +38,7 @@
 
 	let zippedRows = $derived(
 		(() => {
-			let zippedRows = sortState.current!.statementSet!.statements.map(
+			let zippedRows = (sortState.current?.statementSet?.statements ?? []).map(
 				(s, i): [string, number, number] => [
 					s,
 					leftSort?.descriptivenessQuotient?.[i] ?? 0.5,

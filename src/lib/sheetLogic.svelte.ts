@@ -1,5 +1,5 @@
 import { Effect, Exit, Option, pipe } from 'effect';
-import { fetchDocument, createSheets, type GoogleSheetId } from './googleSheetsWrapper';
+import { fetchDocument, createSheets, type GoogleSheetId, appendRow } from './googleSheetsWrapper';
 import { effect } from 'effect/Layer';
 import { number } from 'effect/Equivalence';
 import { onMount } from 'svelte';
@@ -33,7 +33,17 @@ interface Sort {
 }
 
 class SortState {
-	all: null | { sorts: Sort[]; statementSets: StatementSet[] } = $state(null);
+	all: null | {
+		sorts: Sort[];
+		statementSets: StatementSet[];
+		appendStatementSet: (
+			set: Partial<StatementSet> & Pick<StatementSet, 'statementSet'>
+		) => Promise<void>;
+		appendSort: (
+			sort: Partial<Sort> & Pick<Sort, 'statementPositions' | 'subject' | 'statementSet'>
+		) => Promise<void>;
+	} = $state(null);
+
 	currentStatementSetName: string | null = $state(null);
 	current = $derived({
 		statementSet:
@@ -58,14 +68,20 @@ class SortState {
 
 export const sortState: SortState = new SortState();
 
-const sheetParams: Record<SheetId, SheetParams> = {
+const sheetParams = {
 	statementSets: {
 		title: 'Statement Sets',
-		headers: ['Statement Set', 'Updated at', 'Description', 'Note', 'Statements Begin Here']
+		headers: [
+			'Statement Set',
+			'Updated at',
+			'Description',
+			'Note',
+			'Statements Begin Here'
+		] as const
 	},
 	sorts: {
 		title: 'Sorts',
-		headers: ['Statement Set', 'Subject', 'Sorted At', 'Note', 'Statement Bins Begin Here']
+		headers: ['Statement Set', 'Subject', 'Sorted At', 'Note', 'Statement Bins Begin Here'] as const
 	}
 } as const;
 
@@ -111,7 +127,7 @@ const headerLocationVector = (sheet: gapi.client.sheets.Sheet, sheetId: SheetId)
 			sheetParams[sheetId].headers.map((headerText) => grid[0].findIndex((c) => headerText == c))
 		),
 		Effect.flatMap((rawVec) => {
-			const unMapped = sheetParams[sheetId].headers.filter((label, index) => rawVec[index] < 0);
+			const unMapped = sheetParams[sheetId].headers.filter((_label, index) => rawVec[index] < 0);
 			if (unMapped.length)
 				return Effect.fail(`${sheetParams[sheetId].title} ${unMapped.join(', ')} are missing`);
 			return Effect.succeed(rawVec);
@@ -208,8 +224,49 @@ export const loadSheet = async (id: GoogleSheetId | null = null) => {
 
 	return sheetsExit.pipe(
 		Exit.match({
-			onSuccess({ sorts, statementSets }) {
-				sortState.all = { sorts, statementSets };
+			onSuccess: async ({ sorts, statementSets, sheets, headerLocationVectors }) => {
+				sortState.all = {
+					sorts,
+					statementSets,
+					appendSort: async (sort) => {
+						const data = new Array(
+							headerLocationVectors.statementSets[3 /* Statements Begin Here */]
+						).map(() => '');
+
+						data[headerLocationVectors.statementSets[0]] = sort.statementSet;
+						data[headerLocationVectors.statementSets[1]] = sort.subject;
+
+						data[headerLocationVectors.statementSets[2]] = sort.sortedOn
+							? String(sort.sortedOn)
+							: String(new Date());
+						data[headerLocationVectors.statementSets[3]] = sort.note ?? '';
+
+						await appendRow(id, sheets.sorts.properties!.sheetId!, [
+							...data,
+							...sort.statementPositions.map((n) => String(n))
+						]);
+						return;
+					},
+					appendStatementSet: async (set) => {
+						const data = new Array(
+							headerLocationVectors.statementSets[3 /* Statements Begin Here */]
+						).map(() => '');
+
+						data[headerLocationVectors.statementSets[0]] = set.statementSet;
+						data[headerLocationVectors.statementSets[1]] = set.updatedAt
+							? String(set.updatedAt)
+							: String(new Date());
+						data[headerLocationVectors.statementSets[2]] = set.description ?? ' ';
+						data[headerLocationVectors.statementSets[3]] = set.note ?? '';
+
+						await appendRow(id, sheets.statementSets.properties!.sheetId!, [
+							...data,
+							...(set.statements ?? [])
+						]);
+						return;
+					}
+				};
+
 				if (sortState.all?.statementSets) {
 					if (
 						!sortState.all.statementSets.some(
@@ -232,13 +289,18 @@ export const loadSheet = async (id: GoogleSheetId | null = null) => {
 	);
 };
 
-export const pickAndLoadSpreadsheet = async () => {
-	const _auth = await handleAuth();
+export const loadSpreadsheetElsePick = async () => {
 	let success = false;
 	try {
 		success = await loadSheet();
 	} catch (e: unknown) {
 		success = false;
 	}
-	if (!success) await pickSpreadsheet(loadSheet);
+	if (!success) {
+		await pickSpreadsheet(loadSheet);
+	}
+};
+
+export const pickNewSpreadsheet = async () => {
+	await pickSpreadsheet(loadSheet);
 };

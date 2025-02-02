@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import { page } from '$app/stores';
-	import { pickAndLoadSpreadsheet, sortState } from '$lib/sheetLogic.svelte';
+	import { pickNewSpreadsheet, sortState } from '$lib/sheetLogic.svelte';
 
 	let showMenu = $state(false);
 
@@ -66,7 +66,7 @@
 				{/each}
 			</select>
 			<li>
-				<a class="link-3" onclick={() => pickAndLoadSpreadsheet()}>Pick New Sheet </a>
+				<a class="link-3" onclick={() => pickNewSpreadsheet()}>Pick New Sheet </a>
 			</li>
 		</menu>
 	{/if}

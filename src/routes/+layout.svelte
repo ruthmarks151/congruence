@@ -2,11 +2,16 @@
 	import { onNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import NavHeader from '$lib/components/header/nav_header.svelte';
-	import { onGapiScriptLoaded, onGisScriptLoaded, tryFreeLogin } from '$lib/googleAuth.svelte';
+	import {
+		inited,
+		onGapiScriptLoaded,
+		onGisScriptLoaded,
+		tryFreeLogin
+	} from '$lib/googleAuth.svelte';
 	import { onMount } from 'svelte';
 
 	import '../app.css';
-	import { pickAndLoadSpreadsheet, sortState } from '$lib/sheetLogic.svelte';
+	import { loadSpreadsheetElsePick, sortState } from '$lib/sheetLogic.svelte';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
@@ -38,10 +43,10 @@
 	<NavHeader />
 {/if}
 
-{#if sortState.all == null}
+{#if sortState.all == null && inited.firstSheet}
 	We need a google sheet to save data in.
 
-	<button class="button-4 filled green" onclick={() => pickAndLoadSpreadsheet()}
+	<button class="button-4 filled green" onclick={() => loadSpreadsheetElsePick()}
 		>Login and Pick a Sheet
 	</button>
 {:else}

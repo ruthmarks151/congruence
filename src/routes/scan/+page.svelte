@@ -24,10 +24,11 @@
 		binVector = binVector?.map((b) => (b == undefined || b < i ? b : b + 1)) ?? null;
 	};
 	const isComplete = (bins: (number | undefined)[]): bins is number[] => !bins.includes(undefined);
-	$: unsorted = sortState.current!.statementSet!.statements.filter(
-		(_, i) => !binVector || binVector[i] == undefined
-	);
-	$: binnedStatements = sortState.current!.statementSet!.statements.reduce(
+	$: unsorted =
+		sortState.current?.statementSet?.statements.filter(
+			(_, i) => !binVector || binVector[i] == undefined
+		) ?? [];
+	$: binnedStatements = (sortState.current?.statementSet?.statements ?? []).reduce(
 		(bins: number[][], s, i) => {
 			if (!binVector) {
 				return bins;
@@ -170,15 +171,7 @@
 	<h2 class="alt-heading-2">Annotated</h2>
 	<canvas style="max-width: 100%;" width="4032" height="3024" bind:this={canvasElement} />
 	<h3 class="heading-3">Unsorted</h3>
-	<StatementBucket
-		statements={unsorted}
-		{maxBin}
-		onMoveRequested={(statement, binId) => {
-			let statememntId = R.indexOf(statement, sortState.current!.statementSet!.statements);
-			if (statememntId < 0 || !binVector) return;
-			binVector[statememntId] = binId;
-		}}
-	/>
+	<StatementBucket statements={unsorted} {maxBin} />
 	<div
 		style="display: flex; flex-direction: row; max-width: 100%; width: 100%; overflow-x: scroll; gap: var(--space-2); margin-top: var(--space-2); padding: var(--space-2);"
 	>
@@ -188,7 +181,10 @@
 				use:dropzone={{
 					dragover_class: 'droppable',
 					on_dropzone(statement: string) {
-						let statememntId = R.indexOf(statement, sortState.current!.statementSet!.statements);
+						let statememntId = R.indexOf(
+							statement,
+							sortState.current?.statementSet?.statements ?? []
+						);
 						if (statememntId < 0 || !binVector) return;
 						binVector[statememntId] = binId;
 					}
@@ -211,14 +207,9 @@
 				</div>
 				<StatementBucket
 					statements={(binContents ?? []).map(
-						(id) => sortState.current!.statementSet!.statements[id]
+						(id) => sortState.current?.statementSet?.statements?.[id] ?? String(id)
 					) ?? []}
 					{maxBin}
-					onMoveRequested={(statement, binId) => {
-						let statememntId = R.indexOf(statement, sortState.current!.statementSet!.statements);
-						if (statememntId < 0 || !binVector) return;
-						binVector[statememntId] = binId;
-					}}
 				/>
 			</div>
 		{/each}
@@ -226,14 +217,14 @@
 	<button
 		class="button-3 green"
 		disabled={!binVector ||
-			binVector?.length !== sortState.current!.statementSet!.statements.length ||
+			binVector?.length !== sortState.current?.statementSet?.statements.length ||
 			!isComplete(binVector)}
 		on:click={() => {
 			if (binVector && isComplete(binVector))
 				doSave({
-					statements: sortState.current!.statementSet!.statements,
+					statements: sortState.current?.statementSet?.statements ?? [],
 					sorts: [
-						...sortState.current!.sorts,
+						...sortState.current?.sorts,
 						{
 							extras: {},
 							sortedOn: new Date().toISOString(),

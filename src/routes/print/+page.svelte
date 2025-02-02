@@ -2,7 +2,7 @@
 	import TokenDescription from '$lib/components/token_description.svelte';
 	import { sortState } from '$lib/sheetLogic.svelte';
 
-	const statementSets = $derived(sortState.all!.statementSets);
+	const statementSets = $derived(sortState.all?.statementSets ?? []);
 
 	let statements_with_index = $derived(
 		(
