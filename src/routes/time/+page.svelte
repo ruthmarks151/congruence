@@ -61,17 +61,17 @@
 						)
 					}),
 					{} as Record<number, number>,
-					R.range(0, sortState.current!.statementSet!.statements.length)
+					R.range(0, sortState.current?.statementSet?.statements.length ?? 0)
 				)
 			}),
 			{} as Record<number, Record<number, number>>,
-			R.range(0, sortState.current!.statementSet!.statements.length)
+			R.range(0, sortState.current?.statementSet?.statements.length ?? 0)
 		)
 	);
 	let pairs = $derived(
 		R.xprod(
-			R.range(0, sortState.current!.statementSet!.statements.length),
-			R.range(0, sortState.current!.statementSet!.statements.length)
+			R.range(0, sortState.current?.statementSet?.statements.length ?? 0),
+			R.range(0, sortState.current?.statementSet?.statements.length ?? 0)
 		)
 	);
 
@@ -82,8 +82,8 @@
 				(row: [string, string, number]) => Math.abs(row[2]) > 0.5,
 				R.map(
 					(row: [number, number]): [string, string, number] => [
-						sortState.current!.statementSet!.statements[row[0]],
-						sortState.current!.statementSet!.statements[row[1]],
+						sortState.current?.statementSet?.statements[row[0]] ?? '',
+						sortState.current?.statementSet?.statements[row[1]] ?? '',
 						correls[row[0]][row[1]]
 					],
 					R.filter(
@@ -183,8 +183,8 @@
 							class="button-1 outline blue"
 							onclick={() => {
 								includedLines = [
-									[covSubject, sortState.current!.statementSet!.statements.indexOf(s1)],
-									[covSubject, sortState.current!.statementSet!.statements.indexOf(s2)]
+									[covSubject, sortState.current?.statementSet?.statements?.indexOf(s1) ?? 0],
+									[covSubject, sortState.current?.statementSet?.statements?.indexOf(s2) ?? 0]
 								];
 							}}>Plot</button
 						>
@@ -212,8 +212,8 @@
 							class="button-1 outline blue"
 							onclick={() => {
 								includedLines = [
-									[covSubject, sortState.current!.statementSet!.statements.indexOf(s1)],
-									[covSubject, sortState.current!.statementSet!.statements.indexOf(s2)]
+									[covSubject, sortState.current?.statementSet?.statements.indexOf(s1) ?? 0],
+									[covSubject, sortState.current?.statementSet?.statements.indexOf(s2) ?? 0]
 								];
 							}}>Plot</button
 						>
@@ -237,7 +237,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each sortState.current!.statementSet!.statements as statement, statementIndex}
+			{#each sortState.current?.statementSet?.statements ?? [] as statement, statementIndex}
 				<tr>
 					<td>{statement}</td>
 					{#each subjects as subject}
@@ -270,16 +270,16 @@
 			<thead>
 				<tr>
 					<td></td>
-					{#each sortState.current!.statementSet!.statements as _col_statement, col_i}
+					{#each sortState.current?.statementSet?.statements ?? [] as _col_statement, col_i}
 						<td>{col_i + 1}</td>
 					{/each}
 				</tr>
 			</thead>
 			<tbody>
-				{#each sortState.current!.statementSet!.statements as row_statement, row_i}
+				{#each sortState.current?.statementSet?.statements ?? [] as row_statement, row_i}
 					<tr>
 						<td>{row_i + 1}</td>
-						{#each sortState.current!.statementSet!.statements as col_statement, col_i}
+						{#each sortState.current?.statementSet?.statements ?? [] as col_statement, col_i}
 							{@const cov = correls[row_i][col_i]}
 							<td>
 								<div

@@ -200,7 +200,11 @@ const ensureAllSheetsExist = (id: GoogleSheetId) =>
 							updatedAt: new Date(String(row[statementSetHeaderVec[1]])),
 							description: String(row[statementSetHeaderVec[2]]),
 							note: String(row[statementSetHeaderVec[3]]),
-							statements: row.slice(statementSetHeaderVec[4]).map((s) => String(s)) ?? []
+							statements:
+								row
+									.slice(statementSetHeaderVec[4])
+									.filter((s) => s != null && s != '' && s != undefined)
+									.map((s) => String(s)) ?? []
 						}))
 					)
 				)
@@ -266,7 +270,6 @@ export const loadSheet = async (id: GoogleSheetId | null = null) => {
 						return;
 					}
 				};
-
 				if (sortState.all?.statementSets) {
 					if (
 						!sortState.all.statementSets.some(

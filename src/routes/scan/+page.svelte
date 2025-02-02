@@ -4,7 +4,7 @@
 	import { dropzone, draggable } from '$lib/dnd';
 
 	import StatementBucket from './StatementBucket.svelte';
-	import { loadSave, doSave } from '$lib/saves.svelte';
+	import { loadSave, doSave, statementSets } from '$lib/saves.svelte';
 	import { sortState } from '$lib/sheetLogic.svelte';
 
 	// const currentSort = loadSave();
@@ -25,7 +25,7 @@
 	};
 	const isComplete = (bins: (number | undefined)[]): bins is number[] => !bins.includes(undefined);
 	$: unsorted =
-		sortState.current?.statementSet?.statements.filter(
+		sortState.current?.statementSet?.statements?.filter(
 			(_, i) => !binVector || binVector[i] == undefined
 		) ?? [];
 	$: binnedStatements = (sortState.current?.statementSet?.statements ?? []).reduce(
@@ -40,7 +40,7 @@
 			bins[binIndex] = [...(bins[binIndex] ?? []), i];
 			return bins;
 		},
-		[[], [], [], [], []]
+		[[], [], [], [], [], [], [], [], []]
 	);
 
 	const onImgLoad = async (e: Event & { currentTarget: EventTarget & Element }) => {
@@ -139,12 +139,16 @@
 </script>
 
 <main>
-	<TokenDescription title="Scan A Sort">
-		<p class="body-4 desc">After sorting the cards, take a picture from above and upload it here</p>
+	<TokenDescription title="Do A Sort">
+		<p class="body-4 desc">
+			Or sort the printed cards, take a picture from above and upload it here
+		</p>
 	</TokenDescription>
-	<div style="overflow: hidden; max-width: 1025px; height: 16px;">
-		<img src={imgSrc} on:load={onImgLoad} on:click={onImgLoad} alt="Your uploaded file" />
-	</div>
+	{#if imgSrc}
+		<div style="overflow: hidden; max-width: 1025px; height: 16px;">
+			<img src={imgSrc} on:load={onImgLoad} on:click={onImgLoad} alt="Your uploaded file" />
+		</div>
+	{/if}
 	<p>
 		{loading ? 'Loading...' : 'Select Image :'}
 
@@ -168,12 +172,38 @@
 			<input class="input-2" bind:value={subject} />
 		</label>
 	</p>
-	<h2 class="alt-heading-2">Annotated</h2>
-	<canvas style="max-width: 100%;" width="4032" height="3024" bind:this={canvasElement} />
-	<h3 class="heading-3">Unsorted</h3>
-	<StatementBucket statements={unsorted} {maxBin} />
+	{#if imgSrc}
+		<h2 class="alt-heading-2">Annotated</h2>
+		<canvas style="max-width: 100%;" width="4032" height="3024" bind:this={canvasElement} />
+	{/if}
+	{#if imgSrc}
+		<h3 class="heading-3">Unsorted</h3>
+		<StatementBucket statements={unsorted} {maxBin} />
+	{:else if unsorted}
+		<div style="display: flex; flex-direction: column; gap: var(--space-1); margin: 2em 0;">
+			<p>
+				{1 + (sortState.current?.statementSet?.statements?.length ?? 0) - unsorted.length} / {sortState
+					.current?.statementSet?.statements?.length ?? 0}
+			</p>
+			<p style="min-height: 40px; text-align: center;">{unsorted[0]}</p>
+
+			{#each ['Very Much Does Not Describe', 'Does Not Describe', 'Somewhat Does Not Describe', 'Neither Describes nor Does Not Describe', 'Somewhat Describes', 'Describes', 'Very Much Describes'] as label, i}
+				<button
+					class="outline black button-2"
+					on:click={() => {
+						if (binVector)
+							binVector[(sortState.current?.statementSet?.statements ?? []).indexOf(unsorted[0])] =
+								i;
+						unsorted = unsorted.slice(1);
+					}}
+				>
+					{label}
+				</button>
+			{/each}
+		</div>
+	{/if}
 	<div
-		style="display: flex; flex-direction: row; max-width: 100%; width: 100%; overflow-x: scroll; gap: var(--space-2); margin-top: var(--space-2); padding: var(--space-2);"
+		style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 100%; width: 100%; overflow-x: scroll; gap: var(--space-2); margin-top: var(--space-2); padding: var(--space-2);"
 	>
 		{#each binnedStatements as binContents, binId}
 			<div
@@ -221,17 +251,10 @@
 			!isComplete(binVector)}
 		on:click={() => {
 			if (binVector && isComplete(binVector))
-				doSave({
-					statements: sortState.current?.statementSet?.statements ?? [],
-					sorts: [
-						...sortState.current?.sorts,
-						{
-							extras: {},
-							sortedOn: new Date().toISOString(),
-							subject: subject,
-							statementPositions: binVector
-						}
-					]
+				sortState.all?.appendSort({
+					statementSet: sortState.currentStatementSetName!,
+					statementPositions: binVector,
+					subject
 				});
 		}}
 	>
