@@ -49,7 +49,7 @@
 			return zippedRows;
 		})()
 	);
-	$effect(() => {});
+
 	let congruence = $derived(calcCongruence(zippedRows));
 
 	const iconFor = (leftScore: number, rightScore: number) => {
@@ -65,6 +65,23 @@
 		} else {
 			return '⇊';
 		}
+	};
+
+	const wordFor = (percentile: number) => {
+		const descriptiveness = [
+			'Extremely Does Not Describe',
+			'Very Much Does Not Describe',
+			'Does Not Describe',
+			'Somewhat Does Not Describe',
+			'Slightly Does Not Describe',
+			'Neither Describes nor Does Not Describe',
+			'Slightly Describes',
+			'Somewhat Describes',
+			'Describes',
+			'Very Much Describes',
+			'Extremely Describes'
+		];
+		return descriptiveness.find((_, i) => (i + 0.5) / descriptiveness.length > percentile);
 	};
 
 	import * as Plot from '@observablehq/plot';
@@ -119,7 +136,7 @@
 									transform: (data: { statement: string; x: number; y: number }[]) => {
 										return data.map(
 											({ statement, x, y }) =>
-												`${leftLabel}: ${data[0].x} ${rightLabel}: ${data[0].y}\n\n` +
+												`${wordFor(data[0].x)} ${leftLabel}\n${wordFor(data[0].y)} ${rightLabel}\n\n` +
 												data
 													.filter((d) => d.x == x && d.y == y)
 													.map((d) => d.statement)
@@ -221,11 +238,11 @@
 			{#each zippedRows as [statement, leftScore, rightScore]}
 				<tr>
 					<td>{statement}</td>
-					<td>{leftScore}</td>
+					<td title={String(leftScore)}>{wordFor(leftScore)}</td>
 					<td style="text-align: center; padding: 0 var(--space-2)"
 						>{iconFor(leftScore, rightScore)}</td
 					>
-					<td>{rightScore}</td>
+					<td title={String(rightScore)}>{wordFor(rightScore)}</td>
 				</tr>
 			{/each}
 		</tbody>

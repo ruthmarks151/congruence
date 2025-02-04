@@ -40,7 +40,7 @@
 			bins[binIndex] = [...(bins[binIndex] ?? []), i];
 			return bins;
 		},
-		[[], [], [], [], [], [], [], [], []]
+		[[], [], [], [], [], [], []]
 	);
 
 	const onImgLoad = async (e: Event & { currentTarget: EventTarget & Element }) => {
@@ -167,10 +167,14 @@
 			/>
 		</label>
 
-		<label>
-			Sort Subject
-			<input class="input-2" bind:value={subject} />
-		</label>
+		<label class="label-4">Subject</label>
+		<select class="input-2" bind:value={subject}>
+			{#each sortState.current?.subjects as subject, i}
+				<option value={subject}>
+					{subject}
+				</option>
+			{/each}
+		</select>
 	</p>
 	{#if imgSrc}
 		<h2 class="alt-heading-2">Annotated</h2>
@@ -179,31 +183,50 @@
 	{#if imgSrc}
 		<h3 class="heading-3">Unsorted</h3>
 		<StatementBucket statements={unsorted} {maxBin} />
-	{:else if unsorted}
+	{:else if unsorted.length > 0}
 		<div style="display: flex; flex-direction: column; gap: var(--space-1); margin: 2em 0;">
 			<p>
 				{1 + (sortState.current?.statementSet?.statements?.length ?? 0) - unsorted.length} / {sortState
 					.current?.statementSet?.statements?.length ?? 0}
 			</p>
 			<p style="min-height: 40px; text-align: center;">{unsorted[0]}</p>
-
-			{#each ['Very Much Does Not Describe', 'Does Not Describe', 'Somewhat Does Not Describe', 'Neither Describes nor Does Not Describe', 'Somewhat Describes', 'Describes', 'Very Much Describes'] as label, i}
-				<button
-					class="outline black button-2"
-					on:click={() => {
-						if (binVector)
-							binVector[(sortState.current?.statementSet?.statements ?? []).indexOf(unsorted[0])] =
-								i;
-						unsorted = unsorted.slice(1);
-					}}
-				>
-					{label}
-				</button>
-			{/each}
+			<div class="ButtonGroup">
+				{#each ['Very Much Does Not Describe', 'Does Not Describe', 'Somewhat Does Not Describe', 'Neither Describes nor Does Not Describe', 'Somewhat Describes', 'Describes', 'Very Much Describes'] as label, i}
+					<button
+						class="outline black button-2"
+						on:click={() => {
+							if (binVector)
+								binVector[
+									(sortState.current?.statementSet?.statements ?? []).indexOf(unsorted[0])
+								] = i;
+							unsorted = unsorted.slice(1);
+						}}
+					>
+						{label}
+					</button>
+				{/each}
+			</div>
 		</div>
+	{:else}
+		<button
+			class="button-3 green"
+			disabled={!binVector ||
+				binVector?.length !== sortState.current?.statementSet?.statements.length ||
+				!isComplete(binVector)}
+			on:click={() => {
+				if (binVector && isComplete(binVector))
+					sortState.all?.appendSort({
+						statementSet: sortState.currentStatementSetName!,
+						statementPositions: binVector,
+						subject
+					});
+			}}
+		>
+			Save
+		</button>
 	{/if}
 	<div
-		style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 100%; width: 100%; overflow-x: scroll; gap: var(--space-2); margin-top: var(--space-2); padding: var(--space-2);"
+		style={`display: grid; grid-template-columns: repeat(${binnedStatements.length},1fr); max-width: 100%; width: 100%; overflow-x: scroll; gap: var(--space-2); margin-top: var(--space-2); padding: var(--space-2);`}
 	>
 		{#each binnedStatements as binContents, binId}
 			<div
@@ -269,6 +292,7 @@
 		flex-grow: 1;
 		max-width: max(20%, 15em);
 		padding: var(--space-1);
+		min-width: 140px;
 	}
 	.column:global(.droppable) {
 		outline: 3px solid var(--orange-5);
@@ -277,5 +301,22 @@
 
 	.column:global(.droppable) * {
 		pointer-events: none;
+	}
+
+	.ButtonGroup {
+		display: flex;
+		flex-direction: row;
+		gap: var(--space-1);
+		margin: 2em 0;
+		* {
+			width: 0;
+			flex-grow: 1;
+		}
+		@media screen and (max-width: 850px) {
+			flex-direction: column;
+			* {
+				width: 100%;
+			}
+		}
 	}
 </style>

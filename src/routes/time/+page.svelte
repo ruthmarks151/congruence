@@ -98,6 +98,21 @@
 		)
 	);
 
+	const correlationString = (r: number) => {
+		const dir = r > 0 ? 'positive' : 'negative';
+		if (Math.abs(r) >= 0.9) {
+			return `Very strong ${dir} correlation`;
+		} else if (Math.abs(r) >= 0.75) {
+			return `Strong ${dir} correlation`;
+		} else if (Math.abs(r) >= 0.45) {
+			return `Moderate ${dir} correlation`;
+		} else if (Math.abs(r) >= 0.15) {
+			return `Weak ${dir} correlation`;
+		} else {
+			return `Near zero correlation`;
+		}
+	};
+
 	import * as Plot from '@observablehq/plot';
 	import * as d3 from 'd3';
 	import { sortState } from '$lib/sheetLogic.svelte';
@@ -178,7 +193,8 @@
 			<ul class="body-4">
 				{#each correlRows.filter(([, , r]) => r > 0) as [s1, s2, r]}
 					<li>
-						{r}
+						{correlationString(r)}
+						{Math.round(r * 100) / 100}
 						<button
 							class="button-1 outline blue"
 							onclick={() => {
@@ -207,7 +223,8 @@
 			<ul class="body-4">
 				{#each correlRows.filter(([, , r]) => r < 0) as [s1, s2, r]}
 					<li>
-						{r}
+						{correlationString(r)}
+						{Math.round(r * 100) / 100}
 						<button
 							class="button-1 outline blue"
 							onclick={() => {
