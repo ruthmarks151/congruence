@@ -2,7 +2,6 @@
 	import { base } from '$app/paths';
 	import { browser } from '$app/environment';
 	import LinkCard from '$lib/components/link_card.svelte';
-	import { sortState } from '$lib/sheetLogic.svelte';
 
 	let saveExists = $derived(sortState != null);
 </script>

@@ -5,7 +5,7 @@ import {
 } from '$env/static/public';
 import type { picker } from 'google-one-tap';
 import type { GoogleSheetId } from './googleSheetsWrapper';
-import { loadSheet, loadSpreadsheetElsePick } from './sheetLogic.svelte';
+import { loadSheet, loadSpreadsheetElsePick } from './sortStore.svelte';
 // Discovery doc URL for APIs used by the quickstart
 const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
 
@@ -50,7 +50,6 @@ async function onGapiClientLoaded() {
 
 	gapi.client.load('drive', 'v2', () => {
 		driveInited = true;
-		maybeTryLogin();
 	});
 
 	gapi.load('picker', onPickerApiLoad);
@@ -60,7 +59,6 @@ async function onGapiClientLoaded() {
 	}
 
 	gapiInited = true;
-	maybeTryLogin();
 }
 
 /**
@@ -81,7 +79,6 @@ export const onGisScriptLoaded = () => {
 		callback: '' // defined later
 	});
 	gisInited = true;
-	maybeTryLogin();
 };
 
 export const tryFreeLogin = () =>

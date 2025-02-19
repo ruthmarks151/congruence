@@ -3,15 +3,24 @@
 	import { correl, loadSave, type Sort } from '$lib/saves.svelte';
 	import * as R from 'ramda';
 	import TokenDescription from '$lib/components/token_description.svelte';
+	import * as Plot from '@observablehq/plot';
+	import * as d3 from 'd3';
+	import sortStore from '$lib/sortStore.svelte';
+	import { Either } from 'effect';
 
-	let sorts = $derived(
-		R.sortBy(({ sortedOn }: Sort) => sortedOn)(sortState.current?.sorts ?? []).map((s) => ({
-			...s,
-			descriptivenessQuotient: descriptivenessQuotient(s.statementPositions)
-		}))
+	const sorts = $derived(
+		sortStore.current.pipe(
+			Either.map(({ sorts }) =>
+				R.sortBy(({ sortedOn }: Sort) => sortedOn)(sorts).map((s) => ({
+					...s,
+					descriptivenessQuotient: descriptivenessQuotient(s.statementPositions)
+				}))
+			),
+			Either.getOrUndefined
+		) ?? []
 	);
 
-	let subjects = [...new Set(sorts.map((s) => s.subject))];
+	const subjects = $derived([...new Set(sorts.map((s) => s.subject))]);
 	let covSubject = $state(subjects[0]);
 	let covSamples = $derived(
 		sorts.filter((s) => s.subject == covSubject).map((s) => s.descriptivenessQuotient)
@@ -23,8 +32,15 @@
 	]);
 	subjects.sort();
 
+	const statements = $derived(
+		sortStore.current.pipe(
+			Either.map(({ statementSet }) => statementSet.statements),
+			Either.getOrUndefined
+		) ?? []
+	);
+
 	const getStatement = (index: number) =>
-		sortState.current?.statementSet?.statements?.[index] ?? String(index);
+		index >= statements.length ? statements[index] : String(index);
 
 	let data = $derived({
 		labels: sorts.map((s) => s.sortedOn),
@@ -38,6 +54,13 @@
 				}))
 		}))
 	});
+
+	const statementCount = $derived(
+		sortStore.current.pipe(
+			Either.map(({ statementSet }) => statementSet.statements.length),
+			Either.getOrUndefined
+		) ?? 0
+	);
 
 	const stdev = (arr: number[], usePopulation = false) => {
 		const mean = arr.reduce((acc, val) => acc + val, 0) / arr.length;
@@ -61,19 +84,14 @@
 						)
 					}),
 					{} as Record<number, number>,
-					R.range(0, sortState.current?.statementSet?.statements.length ?? 0)
+					R.range(0, statementCount)
 				)
 			}),
 			{} as Record<number, Record<number, number>>,
-			R.range(0, sortState.current?.statementSet?.statements.length ?? 0)
+			R.range(0, statementCount)
 		)
 	);
-	let pairs = $derived(
-		R.xprod(
-			R.range(0, sortState.current?.statementSet?.statements.length ?? 0),
-			R.range(0, sortState.current?.statementSet?.statements.length ?? 0)
-		)
-	);
+	let pairs = $derived(R.xprod(R.range(0, statementCount), R.range(0, statementCount)));
 
 	let correlRows = $derived(
 		R.sortBy(
@@ -82,8 +100,8 @@
 				(row: [string, string, number]) => Math.abs(row[2]) > 0.5,
 				R.map(
 					(row: [number, number]): [string, string, number] => [
-						sortState.current?.statementSet?.statements[row[0]] ?? '',
-						sortState.current?.statementSet?.statements[row[1]] ?? '',
+						getStatement(row[0]),
+						getStatement(row[1]),
 						correls[row[0]][row[1]]
 					],
 					R.filter(
@@ -112,10 +130,6 @@
 			return `Near zero correlation`;
 		}
 	};
-
-	import * as Plot from '@observablehq/plot';
-	import * as d3 from 'd3';
-	import { sortState } from '$lib/sheetLogic.svelte';
 
 	let div: HTMLElement | undefined;
 
@@ -199,8 +213,8 @@
 							class="button-1 outline blue"
 							onclick={() => {
 								includedLines = [
-									[covSubject, sortState.current?.statementSet?.statements?.indexOf(s1) ?? 0],
-									[covSubject, sortState.current?.statementSet?.statements?.indexOf(s2) ?? 0]
+									[covSubject, statements.indexOf(s1) ?? 0],
+									[covSubject, statements.indexOf(s2) ?? 0]
 								];
 							}}>Plot</button
 						>
@@ -229,8 +243,8 @@
 							class="button-1 outline blue"
 							onclick={() => {
 								includedLines = [
-									[covSubject, sortState.current?.statementSet?.statements.indexOf(s1) ?? 0],
-									[covSubject, sortState.current?.statementSet?.statements.indexOf(s2) ?? 0]
+									[covSubject, statements.indexOf(s1) ?? 0],
+									[covSubject, statements.indexOf(s2) ?? 0]
 								];
 							}}>Plot</button
 						>
@@ -254,7 +268,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each sortState.current?.statementSet?.statements ?? [] as statement, statementIndex}
+			{#each statements as statement, statementIndex}
 				<tr>
 					<td>{statement}</td>
 					{#each subjects as subject}
@@ -287,16 +301,16 @@
 			<thead>
 				<tr>
 					<td></td>
-					{#each sortState.current?.statementSet?.statements ?? [] as _col_statement, col_i}
+					{#each statements as _col_statement, col_i}
 						<td>{col_i + 1}</td>
 					{/each}
 				</tr>
 			</thead>
 			<tbody>
-				{#each sortState.current?.statementSet?.statements ?? [] as row_statement, row_i}
+				{#each statements as row_statement, row_i}
 					<tr>
 						<td>{row_i + 1}</td>
-						{#each sortState.current?.statementSet?.statements ?? [] as col_statement, col_i}
+						{#each statements as col_statement, col_i}
 							{@const cov = correls[row_i][col_i]}
 							<td>
 								<div

@@ -1,56 +1,80 @@
 <script lang="ts">
 	import TokenDescription from '$lib/components/token_description.svelte';
+	import { asTaggedUnion } from '$lib/effect_utils';
 	import { calcCongruence } from '$lib/saves.svelte';
 	import { descriptivenessQuotient } from '$lib/sort_utils';
-	import * as R from 'ramda';
-	import { sortState } from '$lib/sheetLogic.svelte';
+	import sortStore from '$lib/sortStore.svelte';
 
-	let sorts = $derived([
-		...sortState.current.sorts.map((s) => ({
-			...s,
-			descriptivenessQuotient: descriptivenessQuotient(s.statementPositions)
-		}))
-	]);
-	let leftSubject = $state(sortState.current.subjects[0]);
-	let rightSubject = $state(sortState.current.subjects[1]);
+	let leftSubject = $state(
+		sortStore.current.pipe(
+			Either.map((data) => data.subjects[1]),
+			Either.getOrUndefined
+		) ?? ''
+	);
+	let rightSubject = $state(
+		sortStore.current.pipe(
+			Either.map((data) => data.subjects[0]),
+			Either.getOrUndefined
+		) ?? ''
+	);
 
-	let leftDates = $derived(
-		sortState.current.sorts.filter(({ subject }) => subject == leftSubject).map((s) => s.sortedOn)
-	);
-	let rightDates = $derived(
-		sortState.current.sorts.filter(({ subject }) => subject == rightSubject).map((s) => s.sortedOn)
-	);
 	let leftDate = $state(
-		sortState.current.sorts.filter(({ subject }) => subject == leftSubject).splice(-1)[0]
-			?.sortedOn ?? ''
+		sortStore.current.pipe(
+			Either.map(
+				(data) => data.sorts.filter(({ subject }) => subject == leftSubject).splice(-1)[0].sortedOn
+			),
+			Either.getOrUndefined
+		) ?? ''
 	);
 	let rightDate = $state(
-		sortState.current.sorts.filter(({ subject }) => subject == rightSubject).splice(-1)[0]
-			?.sortedOn ?? ''
+		sortStore.current.pipe(
+			Either.map(
+				(data) => data.sorts.filter(({ subject }) => subject == rightSubject).splice(-1)[0].sortedOn
+			),
+			Either.getOrUndefined
+		) ?? ''
 	);
 
-	let leftSort = $derived(
-		sorts.find(({ subject, sortedOn }) => subject == leftSubject && sortedOn == leftDate)
-	);
-	let rightSort = $derived(
-		sorts.find(({ subject, sortedOn }) => subject == rightSubject && sortedOn == rightDate)
+	const current = $derived(
+		sortStore.current.pipe(
+			Either.map(({ sorts, subjects }) => ({
+				leftDates: sorts.filter(({ subject }) => subject == leftSubject).map((s) => s.sortedOn),
+				rightDates: sorts.filter(({ subject }) => subject == rightSubject).map((s) => s.sortedOn),
+				subjects
+			})),
+			Either.merge
+		)
 	);
 
 	let zippedRows = $derived(
-		(() => {
-			let zippedRows = (sortState.current?.statementSet?.statements ?? []).map(
-				(s, i): [string, number, number] => [
-					s,
-					leftSort?.descriptivenessQuotient?.[i] ?? 0.5,
-					rightSort?.descriptivenessQuotient?.[i] ?? 0.5
-				]
-			);
-			zippedRows.sort((a, b) => Math.abs(b[1] - b[2]) - Math.abs(a[1] - a[2]));
-			return zippedRows;
-		})()
+		sortStore.current.pipe(
+			Either.map((current) => {
+				const augmentedSorts = current.sorts.map((s) => ({
+					...s,
+					descriptivenessQuotient: descriptivenessQuotient(s.statementPositions)
+				}));
+
+				const leftSort = augmentedSorts.find(
+					({ subject, sortedOn }) => subject == leftSubject && sortedOn == leftDate
+				);
+				const rightSort = augmentedSorts.find(
+					({ subject, sortedOn }) => subject == rightSubject && sortedOn == rightDate
+				);
+
+				let zippedRows = (current.statementSet.statements ?? []).map(
+					(s, i): [string, number, number] => [
+						s,
+						leftSort ? leftSort.descriptivenessQuotient[i] : 0.5,
+						rightSort ? rightSort.descriptivenessQuotient[i] : 0.5
+					]
+				);
+				zippedRows.sort((a, b) => Math.abs(b[1] - b[2]) - Math.abs(a[1] - a[2]));
+				return zippedRows;
+			})
+		)
 	);
 
-	let congruence = $derived(calcCongruence(zippedRows));
+	let congruence = $derived(zippedRows.pipe(Either.map(calcCongruence)));
 
 	const iconFor = (leftScore: number, rightScore: number) => {
 		const movement = rightScore - leftScore;
@@ -81,77 +105,89 @@
 			'Very Much Describes',
 			'Extremely Describes'
 		];
-		return descriptiveness.find((_, i) => (i + 0.5) / descriptiveness.length > percentile);
+		return descriptiveness.find((_, i) => (i + 1) / descriptiveness.length > percentile);
 	};
 
 	import * as Plot from '@observablehq/plot';
-	import * as d3 from 'd3';
+	import { Either } from 'effect';
 
 	let div: HTMLElement | undefined;
 
 	$effect(() => {
-		const leftLabel = leftSubject == rightSubject ? new Date(leftDate).toDateString() : leftSubject;
-		const rightLabel =
-			leftSubject == rightSubject ? new Date(rightDate).toDateString() : rightSubject;
-
-		div?.firstChild?.remove(); // remove old chart, if any
-		div?.append(
-			Plot.plot({
-				style: {
-					width: '100%'
+		Either.all([zippedRows]).pipe(
+			Either.match({
+				onLeft(left) {
+					div?.firstChild?.remove(); // remove old chart, if any
+					div?.append(`${left}`);
 				},
-				marks: [
-					Plot.ruleY([0]),
-					Plot.ruleX([0]),
-					Plot.line(
-						[
-							[0, 0],
-							[1, 1]
-						],
-						{ stroke: 'var(--neutral-6)' }
-					),
-					Plot.dot(
-						zippedRows.map(([s, x, y]) => ({ statement: s, x, y })),
-						{
-							x: {
-								label: leftLabel,
-								value: 'x'
+				onRight([zippedRows]) {
+					const shouldLabelWithDates = leftSubject == rightSubject;
+					const leftLabel = shouldLabelWithDates ? new Date(leftDate).toDateString() : leftSubject;
+					const rightLabel = shouldLabelWithDates
+						? new Date(rightDate).toDateString()
+						: rightSubject;
+
+					div?.firstChild?.remove(); // remove old chart, if any
+					div?.append(
+						Plot.plot({
+							style: {
+								width: '100%'
 							},
-							y: {
-								label: rightLabel,
-								value: 'y'
-							},
-							r: {
-								transform: (data: { statement: string; x: number; y: number }[]) => {
-									return data.map(
-										({ x, y }) => data.filter((d) => d.x == x && d.y == y).length ** 2
-									);
-									// return `
-								}
-							},
-							stroke: 'var(--blue-5)',
-							channels: {
-								title: {
-									label: 'Statements',
-									transform: (data: { statement: string; x: number; y: number }[]) => {
-										return data.map(
-											({ statement, x, y }) =>
-												`${wordFor(data[0].x)} ${leftLabel}\n${wordFor(data[0].y)} ${rightLabel}\n\n` +
-												data
-													.filter((d) => d.x == x && d.y == y)
-													.map((d) => d.statement)
-													.join('\n')
-										);
-										// return `
+							marks: [
+								Plot.ruleY([0]),
+								Plot.ruleX([0]),
+								Plot.line(
+									[
+										[0, 0],
+										[1, 1]
+									],
+									{ stroke: 'var(--neutral-6)' }
+								),
+								Plot.dot(
+									zippedRows.map(([s, x, y]) => ({ statement: s, x, y })),
+									{
+										x: {
+											label: leftLabel,
+											value: 'x'
+										},
+										y: {
+											label: rightLabel,
+											value: 'y'
+										},
+										r: {
+											transform: (data: { statement: string; x: number; y: number }[]) => {
+												return data.map(
+													({ x, y }) => data.filter((d) => d.x == x && d.y == y).length ** 2
+												);
+												// return `
+											}
+										},
+										stroke: 'var(--blue-5)',
+										channels: {
+											title: {
+												label: 'Statements',
+												transform: (data: { statement: string; x: number; y: number }[]) => {
+													return data.map(
+														({ statement, x, y }) =>
+															`${wordFor(data[0].x)} ${leftLabel}\n${wordFor(data[0].y)} ${rightLabel}\n\n` +
+															data
+																.filter((d) => d.x == x && d.y == y)
+																.map((d) => d.statement)
+																.join('\n')
+													);
+													// return `
+												}
+											}
+										},
+										tip: true
 									}
-								}
-							},
-							tip: true
-						}
-					)
-				]
+								)
+							]
+						})
+					); // add the new chart
+				}
 			})
-		); // add the new chart
+		);
 	});
 </script>
 
@@ -163,53 +199,57 @@
 
 		<div class="wrapper">
 			<div>
-				<label class="label-4">"Left" sort</label><br />
-				<select
-					class="input-2"
-					bind:value={leftSubject}
-					on:change={() => {
-						leftDate = leftDates[leftDates.length - 1];
-					}}
-				>
-					{#each sortState.current?.subjects as subject, i}
-						<option value={subject}>
-							{subject}
-						</option>
-					{/each}
-				</select>
+				{#if !Array.isArray(current)}
+					<label class="label-4">"Left" sort</label><br />
+					<select
+						class="input-2"
+						bind:value={leftSubject}
+						onchange={() => {
+							leftDate = current.leftDates[current.leftDates.length - 1];
+						}}
+					>
+						{#each current.subjects as subject, i}
+							<option value={subject}>
+								{subject}
+							</option>
+						{/each}
+					</select>
 
-				<select bind:value={leftDate} class="input-2">
-					{#each leftDates as date}
-						<option value={date}>
-							{date}
-						</option>
-					{/each}
-				</select>
+					<select bind:value={leftDate} class="input-2">
+						{#each current.leftDates as date}
+							<option value={date}>
+								{date}
+							</option>
+						{/each}
+					</select>
+				{/if}
 			</div>
 
 			<div>
-				<label class="label-4">"Right" sort</label><br />
-				<select
-					class="input-2"
-					bind:value={rightSubject}
-					on:change={() => {
-						rightDate = rightDates[rightDates.length - 1];
-					}}
-				>
-					{#each sortState.current?.subjects as subject}
-						<option value={subject}>
-							{subject}
-						</option>
-					{/each}
-				</select>
+				{#if !Array.isArray(current)}
+					<label class="label-4">"Right" sort</label><br />
+					<select
+						class="input-2"
+						bind:value={rightSubject}
+						onchange={() => {
+							rightDate = current.rightDates[current.rightDates.length - 1];
+						}}
+					>
+						{#each current.subjects as subject}
+							<option value={subject}>
+								{subject}
+							</option>
+						{/each}
+					</select>
 
-				<select class="input-2" bind:value={rightDate}>
-					{#each rightDates as date}
-						<option value={date}>
-							{date}
-						</option>
-					{/each}
-				</select>
+					<select class="input-2" bind:value={rightDate}>
+						{#each current.rightDates as date}
+							<option value={date}>
+								{date}
+							</option>
+						{/each}
+					</select>
+				{/if}
 			</div>
 		</div>
 	</TokenDescription>
@@ -235,16 +275,22 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each zippedRows as [statement, leftScore, rightScore]}
+			{#if Either.isRight(zippedRows)}
+				{#each Either.getOrThrow(zippedRows) as [statement, leftScore, rightScore]}
+					<tr>
+						<td>{statement}</td>
+						<td title={String(leftScore)}>{wordFor(leftScore)}</td>
+						<td style="text-align: center; padding: 0 var(--space-2)"
+							>{iconFor(leftScore, rightScore)}</td
+						>
+						<td title={String(rightScore)}>{wordFor(rightScore)}</td>
+					</tr>
+				{/each}
+			{:else}
 				<tr>
-					<td>{statement}</td>
-					<td title={String(leftScore)}>{wordFor(leftScore)}</td>
-					<td style="text-align: center; padding: 0 var(--space-2)"
-						>{iconFor(leftScore, rightScore)}</td
-					>
-					<td title={String(rightScore)}>{wordFor(rightScore)}</td>
+					<td colspan="4">{Either.getLeft(zippedRows)}</td>
 				</tr>
-			{/each}
+			{/if}
 		</tbody>
 	</table>
 </main>

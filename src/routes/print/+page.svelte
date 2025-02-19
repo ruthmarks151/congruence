@@ -1,16 +1,22 @@
 <script lang="ts">
+	import * as R from 'ramda';
 	import TokenDescription from '$lib/components/token_description.svelte';
-	import { sortState } from '$lib/sheetLogic.svelte';
+	import sortStore from '$lib/sortStore.svelte';
+	import { Either } from 'effect';
 
-	const statementSets = $derived(sortState.all?.statementSets ?? []);
+	const statementSets = $derived(Either.getOrUndefined(sortStore.loadedData)?.statementSets ?? []);
 
 	let statements_with_index = $derived(
-		(
-			sortState.current?.statementSet ?? {
-				statements: []
-			}
-		).statements.map((statement, index): [string, number] => [statement, index])
+		sortStore.current.pipe(
+			Either.map(({ statementSet }) =>
+				R.sortBy(([statement]: [string, number]) => statement.length)(
+					statementSet.statements.map((statement, index): [string, number] => [statement, index])
+				)
+			),
+			Either.getOrUndefined
+		) ?? []
 	);
+
 	$effect(() => {
 		statements_with_index.sort((a, b) => b[0].length - a[0].length);
 	});
@@ -22,7 +28,7 @@
 			You'll do sorts with printed out cards on a flat surface, then take a picture to import the
 			results
 		</p>
-		<select bind:value={sortState.currentStatementSetName}>
+		<select bind:value={sortStore.currentStatementSetName}>
 			{#each statementSets as statementSet}
 				<option value={statementSet.statementSet}>{statementSet.statementSet}</option>
 			{/each}

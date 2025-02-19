@@ -6,12 +6,16 @@
 		inited,
 		onGapiScriptLoaded,
 		onGisScriptLoaded,
+		tryActiveLogin,
 		tryFreeLogin
 	} from '$lib/googleAuth.svelte';
 	import { onMount } from 'svelte';
 
 	import '../app.css';
-	import { loadSpreadsheetElsePick, sortState } from '$lib/sheetLogic.svelte';
+	import sortStore from '$lib/sortStore.svelte';
+	import { loadSpreadsheetElsePick } from '$lib/sortStore.svelte';
+	import { asTaggedUnion } from '$lib/effect_utils';
+	import { JsonNumber } from 'effect/Schema';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
@@ -30,6 +34,11 @@
 			});
 		});
 	});
+
+	const data = $derived(asTaggedUnion(sortStore.loadedData));
+	$effect(() => {
+		console.log('data', data);
+	});
 </script>
 
 <svelte:head>
@@ -43,14 +52,29 @@
 	<NavHeader />
 {/if}
 
-{#if sortState.all == null && inited.firstSheet}
+{#if data[0] == 'Right'}
+	Data!
+	{@render children?.()}
+{:else if data[1][0] == 'loading'}
+	{(() => {
+		debugger;
+	})()}
+	Loading
+{:else if data[1][0] == 'unpicked'}
 	We need a google sheet to save data in.
 
 	<button class="button-4 filled green" onclick={() => loadSpreadsheetElsePick()}
 		>Login and Pick a Sheet
 	</button>
+{:else if data[1][0] == 'unauthed'}
+	<button onclick={() => tryActiveLogin().then(() => sortStore.handleAuthed())}>Login</button>
+{:else if data[1][0] == 'error'}
+	{(() => {
+		debugger;
+	})()}
+	Error! {data[1][1]}
 {:else}
-	{@render children?.()}
+	{JSON.stringify(data)}
 {/if}
 
 <footer>

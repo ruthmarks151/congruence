@@ -5,7 +5,9 @@
 
 	import StatementBucket from './StatementBucket.svelte';
 	import { loadSave, doSave, statementSets } from '$lib/saves.svelte';
-	import { sortState } from '$lib/sheetLogic.svelte';
+	import sortStore from '$lib/sortStore.svelte';
+	import { Either, Option } from 'effect';
+	import { isRight } from 'effect/StreamHaltStrategy';
 
 	// const currentSort = loadSave();
 
@@ -13,34 +15,54 @@
 	let subject = '';
 	let loading = false;
 	let canvasElement: null | HTMLCanvasElement = null;
-	let binVector: null | (number | undefined)[] = [];
+	let binVector: null | (number | undefined)[] = $state([]);
 
-	$: maxBin = R.reduce(
-		R.max<number>,
-		0,
-		(binVector ?? []).filter((x): x is number => typeof x == 'number')
+	const maxBin = $derived(
+		R.reduce(
+			R.max<number>,
+			0,
+			(binVector ?? []).filter((x): x is number => typeof x == 'number')
+		)
 	);
 	const addBinAt = (i: number) => {
 		binVector = binVector?.map((b) => (b == undefined || b < i ? b : b + 1)) ?? null;
 	};
 	const isComplete = (bins: (number | undefined)[]): bins is number[] => !bins.includes(undefined);
-	$: unsorted =
-		sortState.current?.statementSet?.statements?.filter(
-			(_, i) => !binVector || binVector[i] == undefined
-		) ?? [];
-	$: binnedStatements = (sortState.current?.statementSet?.statements ?? []).reduce(
-		(bins: number[][], s, i) => {
-			if (!binVector) {
-				return bins;
-			}
-			let binIndex = binVector[i];
-			if (binIndex == undefined) {
-				return bins;
-			}
-			bins[binIndex] = [...(bins[binIndex] ?? []), i];
-			return bins;
-		},
-		[[], [], [], [], [], [], []]
+	const statements = $derived(
+		sortStore.current.pipe(
+			Either.map(({ statementSet }) => statementSet.statements),
+			Either.getOrUndefined
+		) ?? []
+	);
+
+	const unsorted = $derived(
+		sortStore.current.pipe(
+			Either.map(({ statementSet }) =>
+				statementSet.statements.filter((_, i) => !binVector || binVector[i] == undefined)
+			),
+			Either.getOrUndefined
+		) ?? []
+	);
+	const binnedStatements = $derived(
+		sortStore.current.pipe(
+			Either.map(({ statementSet }) =>
+				statementSet.statements.reduce(
+					(bins: number[][], s, i) => {
+						if (!binVector) {
+							return bins;
+						}
+						let binIndex = binVector[i];
+						if (binIndex == undefined) {
+							return bins;
+						}
+						bins[binIndex] = [...(bins[binIndex] ?? []), i];
+						return bins;
+					},
+					[[], [], [], [], [], [], []] // 7 by default to match the likert
+				)
+			),
+			Either.getOrUndefined
+		) ?? []
 	);
 
 	const onImgLoad = async (e: Event & { currentTarget: EventTarget & Element }) => {
@@ -146,7 +168,7 @@
 	</TokenDescription>
 	{#if imgSrc}
 		<div style="overflow: hidden; max-width: 1025px; height: 16px;">
-			<img src={imgSrc} on:load={onImgLoad} on:click={onImgLoad} alt="Your uploaded file" />
+			<img src={imgSrc} onload={onImgLoad} onclick={onImgLoad} alt="Your uploaded file" />
 		</div>
 	{/if}
 	<p>
@@ -159,7 +181,7 @@
 				id="fileInput"
 				class="input-1"
 				name="file"
-				on:change={({ currentTarget }) => {
+				onchange={({ currentTarget }) => {
 					if ('files' in currentTarget && currentTarget.files?.length) {
 						imgSrc = URL.createObjectURL(currentTarget.files[0]);
 					}
@@ -168,13 +190,23 @@
 		</label>
 
 		<label class="label-4">Subject</label>
-		<select class="input-2" bind:value={subject}>
-			{#each sortState.current?.subjects as subject, i}
-				<option value={subject}>
-					{subject}
+		{#if Either.isRight(sortStore.current)}
+			{@const subjects = Either.getOrThrow(sortStore.current).subjects}
+			<select class="input-2" bind:value={subject}>
+				{#each subjects as subject, i}
+					<option value={subject}>
+						{subject}
+					</option>
+				{/each}
+			</select>
+		{:else}
+			{@const state = Option.getOrThrow(Either.getLeft(sortStore.current))[0]}
+			<select class="input-2" bind:value={subject}>
+				<option>
+					{state}
 				</option>
-			{/each}
-		</select>
+			</select>
+		{/if}
 	</p>
 	{#if imgSrc}
 		<h2 class="alt-heading-2">Annotated</h2>
@@ -186,20 +218,16 @@
 	{:else if unsorted.length > 0}
 		<div style="display: flex; flex-direction: column; gap: var(--space-1); margin: 2em 0;">
 			<p>
-				{1 + (sortState.current?.statementSet?.statements?.length ?? 0) - unsorted.length} / {sortState
-					.current?.statementSet?.statements?.length ?? 0}
+				{1 + statements.length - unsorted.length} / {statements.length}
 			</p>
 			<p style="min-height: 40px; text-align: center;">{unsorted[0]}</p>
 			<div class="ButtonGroup">
 				{#each ['Very Much Does Not Describe', 'Does Not Describe', 'Somewhat Does Not Describe', 'Neither Describes nor Does Not Describe', 'Somewhat Describes', 'Describes', 'Very Much Describes'] as label, i}
 					<button
 						class="outline black button-2"
-						on:click={() => {
-							if (binVector)
-								binVector[
-									(sortState.current?.statementSet?.statements ?? []).indexOf(unsorted[0])
-								] = i;
-							unsorted = unsorted.slice(1);
+						onclick={() => {
+							if (binVector) binVector[statements.indexOf(unsorted[0])] = i;
+							// unsorted = unsorted.slice(1);
 						}}
 					>
 						{label}
@@ -207,16 +235,19 @@
 				{/each}
 			</div>
 		</div>
-	{:else}
+	{:else if Either.isRight(sortStore.current)}
+		{@const [current, loadedData] = Either.getOrThrow(
+			Either.all([sortStore.current, sortStore.loadedData] as const)
+		)}
 		<button
 			class="button-3 green"
 			disabled={!binVector ||
-				binVector?.length !== sortState.current?.statementSet?.statements.length ||
+				binVector?.length !== current.statementSet.statements.length ||
 				!isComplete(binVector)}
-			on:click={() => {
+			onclick={() => {
 				if (binVector && isComplete(binVector))
-					sortState.all?.appendSort({
-						statementSet: sortState.currentStatementSetName!,
+					loadedData.appendSort({
+						statementSet: loadedData.currentStatementSetName!,
 						statementPositions: binVector,
 						subject
 					});
@@ -224,6 +255,8 @@
 		>
 			Save
 		</button>
+	{:else}
+		<button class="button-3 green" disabled> Save </button>
 	{/if}
 	<div
 		style={`display: grid; grid-template-columns: repeat(${binnedStatements.length},1fr); max-width: 100%; width: 100%; overflow-x: scroll; gap: var(--space-2); margin-top: var(--space-2); padding: var(--space-2);`}
@@ -234,10 +267,7 @@
 				use:dropzone={{
 					dragover_class: 'droppable',
 					on_dropzone(statement: string) {
-						let statememntId = R.indexOf(
-							statement,
-							sortState.current?.statementSet?.statements ?? []
-						);
+						let statememntId = R.indexOf(statement, statements);
 						if (statememntId < 0 || !binVector) return;
 						binVector[statememntId] = binId;
 					}
@@ -247,7 +277,7 @@
 					<button
 						class="button-1 filled green"
 						style="padding: none; margin: auto; margin-left: 0;"
-						on:click={() => addBinAt(binId - 1)}>＋</button
+						onclick={() => addBinAt(binId - 1)}>＋</button
 					>
 					<h3 class="heading-3" style="margin: auto;">
 						Bin {binId + 1}
@@ -255,13 +285,11 @@
 					<button
 						class="button-1 filled green"
 						style="padding: none; margin: auto; margin-right: 0;"
-						on:click={() => addBinAt(binId)}>＋</button
+						onclick={() => addBinAt(binId)}>＋</button
 					>
 				</div>
 				<StatementBucket
-					statements={(binContents ?? []).map(
-						(id) => sortState.current?.statementSet?.statements?.[id] ?? String(id)
-					) ?? []}
+					statements={(binContents ?? []).map((id) => statements[id] ?? String(id)) ?? []}
 					{maxBin}
 				/>
 			</div>
@@ -269,16 +297,18 @@
 	</div>
 	<button
 		class="button-3 green"
-		disabled={!binVector ||
-			binVector?.length !== sortState.current?.statementSet?.statements.length ||
-			!isComplete(binVector)}
-		on:click={() => {
-			if (binVector && isComplete(binVector))
-				sortState.all?.appendSort({
-					statementSet: sortState.currentStatementSetName!,
-					statementPositions: binVector,
-					subject
-				});
+		disabled={!binVector || binVector?.length !== statements.length || !isComplete(binVector)}
+		onclick={() => {
+			sortStore.loadedData.pipe(
+				Either.map(({ currentStatementSetName, appendSort }) => {
+					if (binVector && isComplete(binVector))
+						appendSort({
+							statementSet: currentStatementSetName!,
+							statementPositions: binVector,
+							subject
+						});
+				})
+			);
 		}}
 	>
 		Save

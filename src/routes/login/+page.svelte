@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getSorts, setSorts } from '$lib/saves.svelte';
-	import { loadSheet } from '$lib/sheetLogic.svelte';
+	import { loadSheet } from '$lib/sortStore.svelte';
 	import { Effect, pipe } from 'effect';
 	import { handleAuth, handleSignout, pickSpreadsheet, tryFreeLogin } from '$lib/googleAuth.svelte';
 	import type { GoogleSheetId } from '$lib/googleSheetsWrapper';

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import { page } from '$app/stores';
-	import { pickNewSpreadsheet, sortState } from '$lib/sheetLogic.svelte';
+	import { pickNewSpreadsheet } from '$lib/sortStore.svelte';
+	import StatementSetPicker from '../statement_set_picker.svelte';
 
 	let showMenu = $state(false);
 
@@ -60,11 +61,7 @@
 				<a onclick={hideMenu} class="link-3" href="{base}/congruence">Congruence Over Time</a>
 			</li>
 			<hr />
-			<select bind:value={sortState.currentStatementSetName}>
-				{#each sortState.all?.statementSets ?? [] as statementSet}
-					<option value={statementSet.statementSet}>{statementSet.statementSet}</option>
-				{/each}
-			</select>
+			<StatementSetPicker />
 			<li>
 				<a class="link-3" onclick={() => pickNewSpreadsheet()}>Pick New Sheet </a>
 			</li>
