@@ -2,8 +2,7 @@
 	import { base } from '$app/paths';
 	import { browser } from '$app/environment';
 	import LinkCard from '$lib/components/link_card.svelte';
-
-	let saveExists = $derived(sortState != null);
+	import sortStore from '$lib/sortStore.svelte';
 </script>
 
 <div class="grid">
@@ -33,23 +32,6 @@
 	<main>
 		<h2 class="heading-4">Get Started</h2>
 		<p class="body-3">Print the cards to do a sort, or upload a save file</p>
-		<nav>
-			<menu>
-				<li>
-					<LinkCard
-						href="{base}/saves"
-						title="Save/Load"
-						desc={saveExists
-							? 'Load an existing set of results from a file'
-							: "No save is currently loaded, the app won't work right until you upload one, or pick a template"}
-						danger={!saveExists}
-					/>
-				</li>
-				<li>
-					<LinkCard href="{base}/scan" title="Scan" desc="Scan a sort you've performed" />
-				</li>
-			</menu>
-		</nav>
 
 		<h2 class="heading-4">Analysis</h2>
 		<p class="body-3">Examine the sorts you've done through various lenses</p>

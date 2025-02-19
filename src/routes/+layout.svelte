@@ -56,9 +56,6 @@
 	Data!
 	{@render children?.()}
 {:else if data[1][0] == 'loading'}
-	{(() => {
-		debugger;
-	})()}
 	Loading
 {:else if data[1][0] == 'unpicked'}
 	We need a google sheet to save data in.

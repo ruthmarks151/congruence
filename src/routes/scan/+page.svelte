@@ -179,6 +179,7 @@
 			<input
 				type="file"
 				id="fileInput"
+				accept="image/png"
 				class="input-1"
 				name="file"
 				onchange={({ currentTarget }) => {
