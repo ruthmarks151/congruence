@@ -21,7 +21,7 @@
 	let leftDate = $state(
 		sortStore.current.pipe(
 			Either.map(
-				(data) => data.sorts.filter(({ subject }) => subject == leftSubject).splice(-1)[0].sortedOn
+				(data) => data.sorts.filter(({ subject }) => subject == leftSubject).splice(-1)[0]?.sortedOn
 			),
 			Either.getOrUndefined
 		) ?? ''
@@ -29,7 +29,8 @@
 	let rightDate = $state(
 		sortStore.current.pipe(
 			Either.map(
-				(data) => data.sorts.filter(({ subject }) => subject == rightSubject).splice(-1)[0].sortedOn
+				(data) =>
+					data.sorts.filter(({ subject }) => subject == rightSubject).splice(-1)[0]?.sortedOn
 			),
 			Either.getOrUndefined
 		) ?? ''
@@ -253,7 +254,7 @@
 			</div>
 		</div>
 	</TokenDescription>
-	<h2 class="heading-2">Congruence: {congruence}</h2>
+	<h2 class="heading-2">Congruence: {congruence.pipe(Either.getOrUndefined)}</h2>
 
 	<div
 		bind:this={div}

@@ -226,9 +226,14 @@ const sortStore: SortStore = new SortStore();
 
 export default sortStore;
 export const loadSheet = async (id: GoogleSheetId | null = null) => {
-	const savedSpreadsheetId = JSON.parse(
-		localStorage.getItem(spreadsheetIdKey) ?? '""'
-	) as GoogleSheetId;
+	let savedSpreadsheetId: GoogleSheetId;
+	try {
+		savedSpreadsheetId = JSON.parse(
+			localStorage.getItem(spreadsheetIdKey) ?? '""'
+		) as GoogleSheetId;
+	} catch (_err: unknown) {
+		savedSpreadsheetId = '' as GoogleSheetId;
+	}
 	if (id != null) {
 		localStorage.setItem(spreadsheetIdKey, JSON.stringify(id));
 	} else if (savedSpreadsheetId != '') {

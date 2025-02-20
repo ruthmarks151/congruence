@@ -1,6 +1,12 @@
 import { Effect, pipe } from 'effect';
-import { fetchDocument, createSheets, type GoogleSheetId } from './googleSheetsWrapper';
+import {
+	fetchDocument,
+	createSheets,
+	type GoogleSheetId,
+	createNewSheet
+} from './googleSheetsWrapper';
 import { type Sort, type StatementSet } from './sortStore.svelte';
+import starterSheets from './starterSheets';
 
 export const spreadsheetIdKey = 'spreadsheetId';
 
@@ -84,15 +90,6 @@ export const ensureAllSheetsExist = (id: GoogleSheetId) =>
 	pipe(
 		Effect.Do,
 		Effect.bind('doc', () => fetchDocument(id)),
-		Effect.bind('sheetsCreated', ({ doc }) => {
-			const sheetsToCreate = nonExistentSheets(doc);
-			return sheetsToCreate.length > 0
-				? createSheets(
-						id,
-						sheetsToCreate.map((sheetId) => ({ title: sheetParams[sheetId].title }))
-					).pipe(Effect.map((_) => true))
-				: Effect.succeed(true);
-		}),
 		Effect.bind('sheets', ({ doc }) =>
 			Effect.all({
 				sorts: extractSheet('sorts', doc),
@@ -147,5 +144,13 @@ export const ensureAllSheetsExist = (id: GoogleSheetId) =>
 						}))
 					)
 				)
+		)
+	);
+
+export const handleCreateStarterSheet = () =>
+	createNewSheet('Congruence Data').pipe(
+		Effect.andThen((id) => createSheets(id, starterSheets())),
+		Effect.flatMap(({ spreadsheetId }) =>
+			Effect.fromNullable((spreadsheetId ?? null) as GoogleSheetId | null)
 		)
 	);

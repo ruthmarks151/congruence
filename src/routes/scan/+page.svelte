@@ -11,10 +11,10 @@
 
 	// const currentSort = loadSave();
 
-	let imgSrc = '';
-	let subject = '';
-	let loading = false;
-	let canvasElement: null | HTMLCanvasElement = null;
+	let imgSrc = $state('');
+	let subject = $state('');
+	let loading = $state(false);
+	let canvasElement: null | HTMLCanvasElement = $state(null);
 	let binVector: null | (number | undefined)[] = $state([]);
 
 	const maxBin = $derived(
@@ -166,8 +166,8 @@
 			Or sort the printed cards, take a picture from above and upload it here
 		</p>
 	</TokenDescription>
-	{#if imgSrc}
-		<div style="overflow: hidden; max-width: 1025px; height: 16px;">
+	{#if imgSrc != ''}
+		<div style="overflow: hidden; max-width: 1025px; height: 160px;">
 			<img src={imgSrc} onload={onImgLoad} onclick={onImgLoad} alt="Your uploaded file" />
 		</div>
 	{/if}
@@ -179,7 +179,7 @@
 			<input
 				type="file"
 				id="fileInput"
-				accept="image/png"
+				accept="image/png,image/jpg,image/jpeg"
 				class="input-1"
 				name="file"
 				onchange={({ currentTarget }) => {

@@ -12,10 +12,12 @@
 	import { onMount } from 'svelte';
 
 	import '../app.css';
-	import sortStore from '$lib/sortStore.svelte';
+	import sortStore, { loadSheet } from '$lib/sortStore.svelte';
 	import { loadSpreadsheetElsePick } from '$lib/sortStore.svelte';
 	import { asTaggedUnion } from '$lib/effect_utils';
 	import { JsonNumber } from 'effect/Schema';
+	import { handleCreateStarterSheet } from '$lib/sheetLogic.svelte';
+	import { Effect } from 'effect';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
@@ -53,18 +55,33 @@
 {/if}
 
 {#if data[0] == 'Right'}
-	Data!
 	{@render children?.()}
 {:else if data[1][0] == 'loading'}
-	Loading
+	Loading...
 {:else if data[1][0] == 'unpicked'}
 	We need a google sheet to save data in.
 
-	<button class="button-4 filled green" onclick={() => loadSpreadsheetElsePick()}
-		>Login and Pick a Sheet
+	<button class="button-4 filled blue" onclick={() => loadSpreadsheetElsePick()}
+		>Pick a Sheet
+	</button>
+	<button
+		class="button-4 filled green"
+		onclick={() =>
+			Effect.runPromiseExit(
+				handleCreateStarterSheet().pipe(Effect.map((sheetId) => loadSheet(sheetId)))
+			)}
+	>
+		New Sheet
 	</button>
 {:else if data[1][0] == 'unauthed'}
-	<button onclick={() => tryActiveLogin().then(() => sortStore.handleAuthed())}>Login</button>
+	<button
+		class="button-4 filled green"
+		onclick={() =>
+			tryActiveLogin().then(async () => {
+				sortStore.handleAuthed();
+				await loadSheet();
+			})}>Login</button
+	>
 {:else if data[1][0] == 'error'}
 	{(() => {
 		debugger;

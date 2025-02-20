@@ -32,15 +32,14 @@
 	]);
 	subjects.sort();
 
-	const statements = $derived(
-		sortStore.current.pipe(
-			Either.map(({ statementSet }) => statementSet.statements),
-			Either.getOrUndefined
-		) ?? []
-	);
-
-	const getStatement = (index: number) =>
-		index >= statements.length ? statements[index] : String(index);
+	const statements = $derived.by(() => {
+		const statements =
+			sortStore.current.pipe(
+				Either.map(({ statementSet }) => statementSet.statements),
+				Either.getOrUndefined
+			) ?? [];
+		return statements;
+	});
 
 	let data = $derived({
 		labels: sorts.map((s) => s.sortedOn),
@@ -48,7 +47,7 @@
 			data: sorts
 				.filter((s) => s.subject == subject)
 				.map((s) => ({
-					label: `${subject} ${getStatement(statementIndex)}`,
+					label: `${subject} ${statementIndex < statements.length ? statements[statementIndex] : String(statementIndex)}`,
 					x: new Date(s.sortedOn),
 					y: s.descriptivenessQuotient[statementIndex]
 				}))
@@ -93,15 +92,15 @@
 	);
 	let pairs = $derived(R.xprod(R.range(0, statementCount), R.range(0, statementCount)));
 
-	let correlRows = $derived(
-		R.sortBy(
+	let correlRows = $derived.by(() => {
+		const rows = R.sortBy(
 			(row: [string, string, number]) => -Math.abs(row[2]),
 			R.filter(
 				(row: [string, string, number]) => Math.abs(row[2]) > 0.5,
 				R.map(
 					(row: [number, number]): [string, string, number] => [
-						getStatement(row[0]),
-						getStatement(row[1]),
+						row[0] < statements.length ? statements[row[0]] : String(row[0]),
+						row[1] < statements.length ? statements[row[1]] : String(row[1]),
 						correls[row[0]][row[1]]
 					],
 					R.filter(
@@ -113,8 +112,9 @@
 					)
 				)
 			)
-		)
-	);
+		);
+		return rows;
+	});
 
 	const correlationString = (r: number) => {
 		const dir = r > 0 ? 'positive' : 'negative';
@@ -212,6 +212,7 @@
 						<button
 							class="button-1 outline blue"
 							onclick={() => {
+								debugger;
 								includedLines = [
 									[covSubject, statements.indexOf(s1) ?? 0],
 									[covSubject, statements.indexOf(s2) ?? 0]

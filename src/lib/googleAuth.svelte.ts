@@ -122,11 +122,12 @@ export const tryActiveLogin = () =>
  *  Sign in the user upon button click.
  */
 export const handleAuth = () =>
-	new Promise<string | null>(async (res, rej) => {
-		const freeLoginToken = await tryFreeLogin();
-		if (freeLoginToken != null) res(freeLoginToken);
+	new Promise<string | null>((res, rej) => {
+		return tryFreeLogin().then((freeLoginToken) => {
+			if (freeLoginToken != null) return res(freeLoginToken);
 
-		res(await tryActiveLogin());
+			tryActiveLogin().then(res);
+		});
 	});
 
 export const handleSignout = () => {
