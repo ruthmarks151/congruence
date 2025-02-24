@@ -89,16 +89,26 @@
 	<button
 		class="button-4 filled green"
 		onclick={() =>
-			tryNormalLogin()
-				.catch((err) => {
-					console.error('tryFreeLogin Failed', err);
-					return tryConsentLogin();
-				})
-				.then(async () => {
+			tryNormalLogin().then(
+				async () => {
+					console.log('Authed off tryNormalLogin!');
 					sortStore.handleAuthed();
 					await loadSheet();
-				})}>Login</button
+				},
+				(err) => {
+					console.warn('tryFreeLogin Failed', err);
+					tryConsentLogin().then(
+						async () => {
+							console.log('Authed off tryConsentLogin!');
+							sortStore.handleAuthed();
+							await loadSheet();
+						},
+						(err) => console.error('tryConsentLogin Failed', err)
+					);
+				}
+			)}>Login</button
 	>
+	<button class="button-4 filled blue" onclick={() => console.log('noop')}> noop </button>
 {:else if data[1][0] == 'error'}
 	Error! {data[1][1]}
 {:else}

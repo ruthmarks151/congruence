@@ -97,25 +97,30 @@ export const isLoggedIn = async (): Promise<boolean> => {
 	}
 };
 
-export const tryNormalLogin = async () => {
-	if (!gapiInited) {
-		return null;
-	}
-
-	tokenClient.callback = async (resp) => {
-		if (resp.error !== undefined) {
-			throw resp.error;
-		} else {
-			localStorage.setItem(googleCredentialsKey, JSON.stringify(resp));
-			return resp.access_token as string;
+export const tryNormalLogin = () =>
+	new Promise<string>((res, rej) => {
+		console.log('tryNormalLogin');
+		if (!gapiInited) {
+			rej('GAPI not inited');
 		}
-	};
-	tokenClient.requestAccessToken({ prompt: '' });
-};
+
+		tokenClient.callback = async (resp) => {
+			console.log('tryNormalLogin tokenClient.callback', resp);
+			if (resp.error !== undefined) {
+				rej(resp.error);
+			} else {
+				localStorage.setItem(googleCredentialsKey, JSON.stringify(resp));
+				res(resp.access_token as string);
+			}
+		};
+		tokenClient.requestAccessToken({ prompt: '' });
+	});
 
 export const tryConsentLogin = () =>
 	new Promise<string>((res, rej) => {
 		tokenClient.callback = async (resp) => {
+			console.log('tryConsentLogin tokenClient.callback', resp);
+
 			if (resp.error !== undefined) {
 				rej(resp.error);
 			} else {
