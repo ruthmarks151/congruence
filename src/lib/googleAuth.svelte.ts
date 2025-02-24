@@ -66,7 +66,7 @@ async function onGapiClientLoaded() {
  * Callback after api.js is loaded.
  */
 export const onGapiScriptLoaded = () => {
-	gapi.load('client', onGapiClientLoaded);
+	gapi.load('client', () => gapi.load('client:auth2', onGapiClientLoaded));
 };
 
 /**
@@ -82,20 +82,25 @@ export const onGisScriptLoaded = () => {
 	gisInited = true;
 };
 
-export const isLoggedIn = async (): Promise<boolean> => {
-	if (!gapiInited) {
-		return false;
-	}
-	const token = await gapi.client.getToken();
+export const isLoggedIn = (): Promise<boolean> =>
+	new Promise((res) => {
+		if (!gapiInited) {
+			console.warn('gapi not Inited ');
+			return res(false);
+		}
+		const token = gapi.client.getToken();
 
-	if (token == null) return false;
-	try {
-		await gapi.client.drive.drives.list({ pageSize: 1 });
-		return true;
-	} catch {
-		return false;
-	}
-};
+		if (token == null) {
+			console.log('token is unset');
+			return res(false);
+		}
+		gapi.auth.checkSessionState(
+			{ session_state: null, client_id: PUBLIC_GOOGLE_OAUTH_CLIENT_ID },
+			(unauthed) => {
+				res(!unauthed);
+			}
+		);
+	});
 
 export const tryBackgroundLogin = () =>
 	new Promise<string>((res, rej) => {
@@ -155,8 +160,8 @@ export const tryConsentLogin = () =>
  */
 export const handleAuth = () =>
 	new Promise<string | null>((res, _rej) => {
-		return tryNormalLogin().then((freeLoginToken) => {
-			if (freeLoginToken != null) return res(freeLoginToken);
+		return isLoggedIn().then((loggedIn) => {
+			if (loggedIn) return res(gapi.client.getToken().access_token as string);
 
 			tryConsentLogin().then(res);
 		});

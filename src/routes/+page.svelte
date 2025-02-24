@@ -3,6 +3,8 @@
 	import { browser } from '$app/environment';
 	import LinkCard from '$lib/components/link_card.svelte';
 	import sortStore from '$lib/sortStore.svelte';
+	import { isLoggedIn } from '$lib/googleAuth.svelte';
+	isLoggedIn().then((l) => console.log('loggedIn?', l));
 </script>
 
 <div class="grid">

@@ -43,14 +43,16 @@
 	});
 
 	$effect(() => {
-		console.log('Trying free', inited.apisLoaded);
 		if (inited.apisLoaded)
 			isLoggedIn().then((loggedin) => {
+				console.log('isLoggedIn resolved', loggedin);
+
 				if (loggedin) {
 					sortStore.handleAuthed();
 					return loadSheet();
+				} else {
+					sortStore.requireAuth();
 				}
-				console.log('Not logged');
 			});
 	});
 </script>
@@ -68,7 +70,7 @@
 
 {#if data[0] == 'Right'}
 	{@render children?.()}
-{:else if data[1][0] == 'loading'}
+{:else if data[1][0] == 'loading' || data[1][0] == 'preauth'}
 	Loading...
 {:else if data[1][0] == 'unpicked'}
 	We need a google sheet to save data in.
@@ -89,36 +91,21 @@
 	<button
 		class="button-4 filled green"
 		onclick={() =>
-			tryBackgroundLogin().then(
-				() => {
-					isLoggedIn()
-						.then((loggedin) => {
-							if (loggedin) {
-								sortStore.handleAuthed();
-								return loadSheet();
-							}
-						})
-						.catch((err) => console.warn('Login check failed', err));
+			tryNormalLogin().then(
+				async () => {
+					console.log('Authed off tryNormalLogin!');
+					sortStore.handleAuthed();
+					await loadSheet();
 				},
 				(err) => {
-					console.warn('tryBackgroundLogin failed', err);
-					return tryNormalLogin().then(
+					console.warn('tryFreeLogin Failed', err);
+					tryConsentLogin().then(
 						async () => {
-							console.log('Authed off tryNormalLogin!');
+							console.log('Authed off tryConsentLogin!');
 							sortStore.handleAuthed();
 							await loadSheet();
 						},
-						(err) => {
-							console.warn('tryFreeLogin Failed', err);
-							tryConsentLogin().then(
-								async () => {
-									console.log('Authed off tryConsentLogin!');
-									sortStore.handleAuthed();
-									await loadSheet();
-								},
-								(err) => console.error('tryConsentLogin Failed', err)
-							);
-						}
+						(err) => console.error('tryConsentLogin Failed', err)
 					);
 				}
 			)}>Login</button

@@ -2,12 +2,7 @@
 	import { getSorts, setSorts } from '$lib/saves.svelte';
 	import { loadSheet } from '$lib/sortStore.svelte';
 	import { Effect, pipe } from 'effect';
-	import {
-		handleAuth,
-		handleSignout,
-		pickSpreadsheet,
-		tryNormalLogin
-	} from '$lib/googleAuth.svelte';
+	import { handleAuth, handleSignout } from '$lib/googleAuth.svelte';
 	import type { GoogleSheetId } from '$lib/googleSheetsWrapper';
 
 	let content = $state('');

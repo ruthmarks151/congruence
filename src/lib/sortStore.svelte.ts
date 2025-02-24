@@ -22,6 +22,7 @@ export interface Sort {
 }
 
 type AppState =
+	| { state: 'preauth' }
 	| { state: 'unauthed' }
 	| { state: 'authed'; spreadsheetId: null; sortData: null }
 	| { state: 'authed'; spreadsheetId: string; sortData: { state: 'error'; error: unknown } }
@@ -40,13 +41,21 @@ interface SortData {
 	currentStatementSetName: string;
 }
 class SortStore {
-	appState: AppState = $state({ state: 'unauthed' });
+	appState: AppState = $state({ state: 'preauth' });
 
 	handleAuthed() {
 		this.appState = { state: 'authed', spreadsheetId: null, sortData: null };
 	}
 
-	authed: Either.Either<AppState & { state: 'authed' }, readonly ['unauthed']> = $derived.by(() => {
+	requireAuth() {
+		this.appState = { state: 'unauthed' };
+	}
+
+	authed: Either.Either<
+		AppState & { state: 'authed' },
+		readonly ['unauthed'] | readonly ['preauth']
+	> = $derived.by(() => {
+		if (this.appState.state == 'preauth') return Either.left(['preauth']);
 		if (this.appState.state == 'unauthed') return Either.left(['unauthed']);
 
 		return Either.right(this.appState);
@@ -88,6 +97,7 @@ class SortStore {
 	current = $derived.by(
 		(): Either.Either<
 			{ statementSet: StatementSet; sorts: Sort[]; subjects: string[] },
+			| readonly ['preauth']
 			| readonly ['unauthed']
 			| readonly ['loading']
 			| readonly ['unpicked']

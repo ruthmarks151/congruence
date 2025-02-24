@@ -11,10 +11,10 @@
 		"strict": true,
 		"types": [
 			"gapi",
-			// "gapi.oauth2",
+			"gapi.oauth2",
 			"gapi.client.drive",
 			"gapi.client.sheets",
-			// "google.accounts.oauth2",
+			"google.accounts.oauth2",
 			"google-one-tap",
 			"google.accounts",
 			"google.picker",
