@@ -25,6 +25,7 @@ let driveInited = $state(false);
 
 class Inited {
 	firstSheet = $state(false);
+	apisLoaded = $derived(gisInited && gapiInited && driveInited);
 }
 
 export const inited = new Inited();
@@ -81,32 +82,39 @@ export const onGisScriptLoaded = () => {
 	gisInited = true;
 };
 
-export const tryFreeLogin = () =>
-	new Promise<string | null>(async (res, rej) => {
-		if (!gapiInited) {
-			res(null);
-			return;
+export const isLoggedIn = async (): Promise<boolean> => {
+	if (!gapiInited) {
+		return false;
+	}
+	const token = await gapi.client.getToken();
+
+	if (token == null) return false;
+	try {
+		await gapi.client.drive.drives.list({ pageSize: 1 });
+		return true;
+	} catch {
+		return false;
+	}
+};
+
+export const tryNormalLogin = async () => {
+	if (!gapiInited) {
+		return null;
+	}
+
+	tokenClient.callback = async (resp) => {
+		if (resp.error !== undefined) {
+			throw resp.error;
+		} else {
+			localStorage.setItem(googleCredentialsKey, JSON.stringify(resp));
+			return resp.access_token as string;
 		}
-		const token = await gapi.client.getToken();
+	};
+	tokenClient.requestAccessToken({ prompt: '' });
+};
 
-		if (token != null) {
-			res(token.access_token);
-			return;
-		}
-
-		tokenClient.callback = async (resp) => {
-			if (resp.error !== undefined) {
-				rej(resp.error);
-			} else {
-				localStorage.setItem(googleCredentialsKey, JSON.stringify(resp));
-				res(resp.access_token as string);
-			}
-		};
-		tokenClient.requestAccessToken({ prompt: '' });
-	});
-
-export const tryActiveLogin = () =>
-	new Promise<string>(async (res, rej) => {
+export const tryConsentLogin = () =>
+	new Promise<string>((res, rej) => {
 		tokenClient.callback = async (resp) => {
 			if (resp.error !== undefined) {
 				rej(resp.error);
@@ -122,11 +130,11 @@ export const tryActiveLogin = () =>
  *  Sign in the user upon button click.
  */
 export const handleAuth = () =>
-	new Promise<string | null>((res, rej) => {
-		return tryFreeLogin().then((freeLoginToken) => {
+	new Promise<string | null>((res, _rej) => {
+		return tryNormalLogin().then((freeLoginToken) => {
 			if (freeLoginToken != null) return res(freeLoginToken);
 
-			tryActiveLogin().then(res);
+			tryConsentLogin().then(res);
 		});
 	});
 

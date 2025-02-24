@@ -213,7 +213,7 @@ class SortStore {
 						sortData: { state: 'error', error: String(cause) }
 					};
 					console.error(`Error importing sheet ${spreadsheetId} ${cause}`);
-					return false;
+					throw cause;
 				}
 			})
 		);
@@ -243,7 +243,7 @@ export const loadSheet = async (id: GoogleSheetId | null = null) => {
 		return false;
 	}
 
-	return sortStore.loadNewSpreadsheet(id);
+	return await sortStore.loadNewSpreadsheet(id);
 };
 
 export const loadSpreadsheetElsePick = async () => {

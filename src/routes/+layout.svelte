@@ -4,18 +4,17 @@
 	import NavHeader from '$lib/components/header/nav_header.svelte';
 	import {
 		inited,
+		isLoggedIn,
 		onGapiScriptLoaded,
 		onGisScriptLoaded,
-		tryActiveLogin,
-		tryFreeLogin
+		tryConsentLogin,
+		tryNormalLogin
 	} from '$lib/googleAuth.svelte';
-	import { onMount } from 'svelte';
 
 	import '../app.css';
 	import sortStore, { loadSheet } from '$lib/sortStore.svelte';
 	import { loadSpreadsheetElsePick } from '$lib/sortStore.svelte';
 	import { asTaggedUnion } from '$lib/effect_utils';
-	import { JsonNumber } from 'effect/Schema';
 	import { handleCreateStarterSheet } from '$lib/sheetLogic.svelte';
 	import { Effect } from 'effect';
 	interface Props {
@@ -40,6 +39,19 @@
 	const data = $derived(asTaggedUnion(sortStore.loadedData));
 	$effect(() => {
 		console.log('data', data);
+	});
+
+	$effect(() => {
+		console.log('Trying free', inited.apisLoaded);
+		if (inited.apisLoaded)
+			isLoggedIn()
+				.then((loggedin) => {
+					if (loggedin) {
+						sortStore.handleAuthed();
+						return loadSheet();
+					}
+				})
+				.catch((err) => console.warn('Login check failed', err));
 	});
 </script>
 
@@ -77,15 +89,17 @@
 	<button
 		class="button-4 filled green"
 		onclick={() =>
-			tryActiveLogin().then(async () => {
-				sortStore.handleAuthed();
-				await loadSheet();
-			})}>Login</button
+			tryNormalLogin()
+				.catch((err) => {
+					console.error('tryFreeLogin Failed', err);
+					return tryConsentLogin();
+				})
+				.then(async () => {
+					sortStore.handleAuthed();
+					await loadSheet();
+				})}>Login</button
 	>
 {:else if data[1][0] == 'error'}
-	{(() => {
-		debugger;
-	})()}
 	Error! {data[1][1]}
 {:else}
 	{JSON.stringify(data)}
