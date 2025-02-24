@@ -7,6 +7,7 @@
 		isLoggedIn,
 		onGapiScriptLoaded,
 		onGisScriptLoaded,
+		tryBackgroundLogin,
 		tryConsentLogin,
 		tryNormalLogin
 	} from '$lib/googleAuth.svelte';
@@ -44,14 +45,19 @@
 	$effect(() => {
 		console.log('Trying free', inited.apisLoaded);
 		if (inited.apisLoaded)
-			isLoggedIn()
-				.then((loggedin) => {
-					if (loggedin) {
-						sortStore.handleAuthed();
-						return loadSheet();
-					}
-				})
-				.catch((err) => console.warn('Login check failed', err));
+			tryBackgroundLogin().then(
+				() => {
+					isLoggedIn()
+						.then((loggedin) => {
+							if (loggedin) {
+								sortStore.handleAuthed();
+								return loadSheet();
+							}
+						})
+						.catch((err) => console.warn('Login check failed', err));
+				},
+				(err) => console.warn('tryBackgroundLogin failed', err)
+			);
 	});
 </script>
 

@@ -97,6 +97,25 @@ export const isLoggedIn = async (): Promise<boolean> => {
 	}
 };
 
+export const tryBackgroundLogin = () =>
+	new Promise<string>((res, rej) => {
+		console.log('tryBackgroundLogin');
+		if (!gapiInited) {
+			rej('GAPI not inited');
+		}
+
+		tokenClient.callback = async (resp) => {
+			console.log('tryBackgroundLogin tokenClient.callback', resp);
+			if (resp.error !== undefined) {
+				rej(resp.error);
+			} else {
+				localStorage.setItem(googleCredentialsKey, JSON.stringify(resp));
+				res(resp.access_token as string);
+			}
+		};
+		tokenClient.requestAccessToken({ prompt: 'none' });
+	});
+
 export const tryNormalLogin = () =>
 	new Promise<string>((res, rej) => {
 		console.log('tryNormalLogin');
