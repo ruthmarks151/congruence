@@ -45,19 +45,13 @@
 	$effect(() => {
 		console.log('Trying free', inited.apisLoaded);
 		if (inited.apisLoaded)
-			tryBackgroundLogin().then(
-				() => {
-					isLoggedIn()
-						.then((loggedin) => {
-							if (loggedin) {
-								sortStore.handleAuthed();
-								return loadSheet();
-							}
-						})
-						.catch((err) => console.warn('Login check failed', err));
-				},
-				(err) => console.warn('tryBackgroundLogin failed', err)
-			);
+			isLoggedIn().then((loggedin) => {
+				if (loggedin) {
+					sortStore.handleAuthed();
+					return loadSheet();
+				}
+				console.log('Not logged');
+			});
 	});
 </script>
 
@@ -95,21 +89,36 @@
 	<button
 		class="button-4 filled green"
 		onclick={() =>
-			tryNormalLogin().then(
-				async () => {
-					console.log('Authed off tryNormalLogin!');
-					sortStore.handleAuthed();
-					await loadSheet();
+			tryBackgroundLogin().then(
+				() => {
+					isLoggedIn()
+						.then((loggedin) => {
+							if (loggedin) {
+								sortStore.handleAuthed();
+								return loadSheet();
+							}
+						})
+						.catch((err) => console.warn('Login check failed', err));
 				},
 				(err) => {
-					console.warn('tryFreeLogin Failed', err);
-					tryConsentLogin().then(
+					console.warn('tryBackgroundLogin failed', err);
+					return tryNormalLogin().then(
 						async () => {
-							console.log('Authed off tryConsentLogin!');
+							console.log('Authed off tryNormalLogin!');
 							sortStore.handleAuthed();
 							await loadSheet();
 						},
-						(err) => console.error('tryConsentLogin Failed', err)
+						(err) => {
+							console.warn('tryFreeLogin Failed', err);
+							tryConsentLogin().then(
+								async () => {
+									console.log('Authed off tryConsentLogin!');
+									sortStore.handleAuthed();
+									await loadSheet();
+								},
+								(err) => console.error('tryConsentLogin Failed', err)
+							);
+						}
 					);
 				}
 			)}>Login</button
