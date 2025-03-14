@@ -11,9 +11,21 @@
 	h3,
 	h4,
 	h5,
-	h6,
-	p {
+	h6 {
 		text-wrap: pretty;
+		font-family: "Ubuntu", sans-serif;
+		font-style: normal;
+	}
+
+	p {
+		font-family: system-ui,
+			'Segoe UI',
+			Roboto,
+			Helvetica,
+			Arial,
+			sans-serif,
+			'Apple Color Emoji',
+			'Segoe UI Emoji';
 	}
 
 	a,
@@ -28,6 +40,9 @@
 	--app-accent: var(--green-5);
 	--app-foreground: var(--neutral-1);
 	--app-background: var(--neutral-9);
+	--font-weight-1: 300;
+	--letter-spacing-1: 0;
+	--letter-spacing-: 0;
 }
 
 html {

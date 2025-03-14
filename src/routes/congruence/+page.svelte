@@ -1,8 +1,7 @@
 <script lang="ts">
-	import * as R from 'ramda';
+	import CongruencePlot from './CongruencePlot.svelte';
 
-	import * as Plot from '@observablehq/plot';
-	import * as d3 from 'd3';
+	import * as R from 'ramda';
 	import TokenDescription from '$lib/components/token_description.svelte';
 	import { Either } from 'effect';
 	import { descriptivenessQuotient } from '$lib/sort_utils';
@@ -88,53 +87,6 @@
 			)
 		)
 	);
-
-	let div: HTMLElement | undefined;
-
-	function onMousemove(event: MouseEvent) {
-		const [x, y] = d3.pointer(event);
-	}
-
-	$effect(() => {
-		points.pipe(
-			Either.match({
-				onLeft(left) {
-					div?.firstChild?.remove(); // remove old chart, if any
-					div?.append(`${left}`);
-				},
-				onRight(points) {
-					div?.firstChild?.remove(); // remove old chart, if any
-					div?.append(
-						Plot.plot({
-							style: {
-								width: '100%'
-							},
-							marks: [
-								Plot.ruleY([0]),
-								Plot.ruleX([points[0].x]),
-								Plot.lineY(points, {
-									x: {
-										label: 'Date',
-										value: 'x',
-										transform: (dates: { x: Date }[]) =>
-											dates.map((d) => {
-												d.x.setUTCHours(0, 0, 0, 0);
-												return d.x;
-											})
-									},
-									y: { label: 'Congruence Coefficient', value: 'y' },
-									marker: true,
-									stroke: 'var(--blue-5)',
-									channels: { label: 'label' },
-									tip: true
-								})
-							]
-						})
-					);
-				}
-			})
-		);
-	});
 </script>
 
 <main>
@@ -170,9 +122,18 @@
 		</div>
 	</TokenDescription>
 
-	<div
-		bind:this={div}
-		role="img"
-		style="width: 100%; max-width: 1024px; padding: var(--space-2);"
-	></div>
+	{#if Either.isRight(points)}
+		<CongruencePlot
+			style="width: 100%; max-width: 1024px; padding: var(--space-2);"
+			points={Either.getOrThrow(points)}
+			therapyRanges={[
+				[new Date('2019-08-23'), new Date('2020-04-12')],
+				[new Date('2020-05-29'), new Date('2020-07-09')],
+				[new Date('2021-08-05'), new Date('2021-09-20')],
+				[new Date('2024-12-11'), new Date('2025-03-31')]
+			]}
+		></CongruencePlot>
+	{:else}
+		{points.pipe(Either.flip, Either.getOrThrow)}
+	{/if}
 </main>

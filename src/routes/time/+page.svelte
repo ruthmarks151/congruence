@@ -3,10 +3,12 @@
 	import { correl, loadSave, type Sort } from '$lib/saves.svelte';
 	import * as R from 'ramda';
 	import TokenDescription from '$lib/components/token_description.svelte';
-	import * as Plot from '@observablehq/plot';
 	import * as d3 from 'd3';
 	import sortStore from '$lib/sortStore.svelte';
 	import { Either } from 'effect';
+	import { linearRegression, correlationExplainerString } from '$lib/statistics';
+	import { round } from 'effect/Number';
+	import StatementTimePlot from './StatementTimePlot.svelte';
 
 	const sorts = $derived(
 		sortStore.current.pipe(
@@ -21,6 +23,33 @@
 	);
 
 	const subjects = $derived([...new Set(sorts.map((s) => s.subject))]);
+
+	const statementRegressions = $derived.by(() => {
+		if (!sorts.length) return [];
+
+		return sorts[0].statementPositions.map((_, i) =>
+			subjects.reduce(
+				(res, subject) => {
+					const subjectSorts = sorts.filter(({ subject: s }) => subject == s);
+					const linreg: ReturnType<typeof linearRegression> = linearRegression(
+						subjectSorts.map(
+							({ sortedOn }) =>
+								(new Date(sortedOn).getTime() - new Date(subjectSorts[0].sortedOn).getTime()) /
+								(1000.0 * 60 * 60 * 24)
+						),
+						subjectSorts.map(({ descriptivenessQuotient }) => 1.0 * descriptivenessQuotient[i])
+					);
+					const o = {
+						...res,
+						[subject]: linreg
+					};
+					return o;
+				},
+				{} as Record<string, ReturnType<typeof linearRegression>>
+			)
+		);
+	});
+
 	let covSubject = $state(subjects[0]);
 	let covSamples = $derived(
 		sorts.filter((s) => s.subject == covSubject).map((s) => s.descriptivenessQuotient)
@@ -41,18 +70,43 @@
 		return statements;
 	});
 
-	let data = $derived({
-		labels: sorts.map((s) => s.sortedOn),
-		datasets: includedLines.map(([subject, statementIndex]) => ({
-			data: sorts
+	let sortBy: {
+		key: 'statementIndex' | 'idealSlope' | 'idealR2' | 'selfSlope' | 'selfR2';
+		reverse: boolean;
+	} = $state({ key: 'statementIndex', reverse: false });
+
+	const handleSortByClick = $derived((k: (typeof sortBy)['key']) => {
+		if (sortBy.key == k) sortBy = { key: sortBy.key, reverse: !sortBy.reverse };
+		else sortBy = { key: k, reverse: false };
+	});
+
+	const statementTable = $derived.by(() => {
+		return R.sortBy(
+			R.compose((v: number) => (sortBy.reverse ? -v : v), R.prop(sortBy.key)),
+			statements.map((statement, i) => {
+				return {
+					statement,
+					statementIndex: i,
+					idealSlope: round(statementRegressions[i]['My Ideal Self'].slope * 365.25, 2),
+					idealR2: round(statementRegressions[i]['My Ideal Self'].r2, 2),
+					selfSlope: round(statementRegressions[i]['Myself'].slope * 365.25, 2),
+					selfR2: round(statementRegressions[i]['Myself'].r2, 2)
+				};
+			})
+		);
+	});
+
+	let linesToPlot = $derived(
+		includedLines.map(([subject, statementIndex]) =>
+			sorts
 				.filter((s) => s.subject == subject)
 				.map((s) => ({
 					label: `${subject} ${statementIndex < statements.length ? statements[statementIndex] : String(statementIndex)}`,
-					x: new Date(s.sortedOn),
-					y: s.descriptivenessQuotient[statementIndex]
+					date: new Date(s.sortedOn),
+					descriptiveness: s.descriptivenessQuotient[statementIndex]
 				}))
-		}))
-	});
+		)
+	);
 
 	const statementCount = $derived(
 		sortStore.current.pipe(
@@ -116,59 +170,9 @@
 		return rows;
 	});
 
-	const correlationString = (r: number) => {
-		const dir = r > 0 ? 'positive' : 'negative';
-		if (Math.abs(r) >= 0.9) {
-			return `Very strong ${dir} correlation`;
-		} else if (Math.abs(r) >= 0.75) {
-			return `Strong ${dir} correlation`;
-		} else if (Math.abs(r) >= 0.45) {
-			return `Moderate ${dir} correlation`;
-		} else if (Math.abs(r) >= 0.15) {
-			return `Weak ${dir} correlation`;
-		} else {
-			return `Near zero correlation`;
-		}
-	};
-
-	let div: HTMLElement | undefined;
-
 	function onMousemove(event: MouseEvent) {
 		const [x, y] = d3.pointer(event);
 	}
-
-	$effect(() => {
-		div?.firstChild?.remove(); // remove old chart, if any
-		div?.append(
-			Plot.plot({
-				style: {
-					width: '100%'
-				},
-				color: { legend: true },
-				marks: [
-					Plot.ruleY([0]),
-					Plot.ruleX([data?.datasets?.[0]?.data?.[0]?.x ?? 0]),
-					...data.datasets.map((ds) =>
-						Plot.lineY(ds.data, {
-							x: {
-								label: 'Date',
-								value: 'x',
-								transform: (dates: { x: Date }[]) =>
-									dates.map((d) => {
-										d.x.setUTCHours(0, 0, 0, 0);
-										return d.x;
-									})
-							},
-							y: { label: 'Descriptiveness Percentile', value: 'y' },
-							stroke: 'label',
-							title: 'label',
-							marker: true
-						})
-					)
-				]
-			})
-		); // add the new chart
-	});
 </script>
 
 <main>
@@ -178,11 +182,10 @@
 		</p>
 	</TokenDescription>
 
-	<div
-		bind:this={div}
-		role="img"
+	<StatementTimePlot
+		lines={linesToPlot}
 		style="width: 100%; max-width: 800px; padding: var(--space-2); margin: auto;"
-	></div>
+	/>
 
 	<h2 class="heading-4" style="display: inline;">Examine Statement Correlations For &nbsp;</h2>
 	<select class="input-1" bind:value={covSubject}>
@@ -207,7 +210,7 @@
 			<ul class="body-4">
 				{#each correlRows.filter(([, , r]) => r > 0) as [s1, s2, r]}
 					<li>
-						{correlationString(r)}
+						{correlationExplainerString(r)}
 						{Math.round(r * 100) / 100}
 						<button
 							class="button-1 outline blue"
@@ -238,7 +241,7 @@
 			<ul class="body-4">
 				{#each correlRows.filter(([, , r]) => r < 0) as [s1, s2, r]}
 					<li>
-						{correlationString(r)}
+						{correlationExplainerString(r)}
 						{Math.round(r * 100) / 100}
 						<button
 							class="button-1 outline blue"
@@ -262,16 +265,24 @@
 	<table>
 		<thead>
 			<tr class="heading-3">
-				<td>Statement</td>
+				<td onclick={() => handleSortByClick('statementIndex')}>Statement</td>
+				<td onclick={() => handleSortByClick('idealSlope')}>Ideal Slope</td>
+				<td onclick={() => handleSortByClick('idealR2')}>Ideal R^2</td>
+				<td onclick={() => handleSortByClick('selfSlope')}>Myself Slope</td>
+				<td onclick={() => handleSortByClick('selfR2')}>Myself R^2</td>
 				{#each subjects as subject}
 					<td>{subject}</td>
 				{/each}
 			</tr>
 		</thead>
 		<tbody>
-			{#each statements as statement, statementIndex}
+			{#each statementTable as row}
 				<tr>
-					<td>{statement}</td>
+					<td>{row.statement}</td>
+					<td>{row.idealSlope}</td>
+					<td>{row.idealR2}</td>
+					<td>{row.selfSlope}</td>
+					<td>{row.selfR2}</td>
 					{#each subjects as subject}
 						<td>
 							<input
@@ -279,13 +290,13 @@
 								bind:checked={
 									() =>
 										includedLines.findIndex(
-											([sub, si]) => sub == subject && si == statementIndex
+											([sub, si]) => sub == subject && si == row.statementIndex
 										) >= 0,
 									(val) => {
-										if (val) includedLines = [...includedLines, [subject, statementIndex]];
+										if (val) includedLines = [...includedLines, [subject, row.statementIndex]];
 										else
 											includedLines = includedLines.filter(
-												([s, si]) => s != subject || si != statementIndex
+												([s, si]) => s != subject || si != row.statementIndex
 											);
 									}
 								}
