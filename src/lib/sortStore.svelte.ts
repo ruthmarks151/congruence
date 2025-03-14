@@ -217,6 +217,22 @@ class SortStore {
 					return true;
 				},
 				onFailure: (cause: unknown) => {
+					if (typeof cause == 'object' && cause != null) {
+						if ('error' in cause && typeof cause.error == 'object' && cause.error != null) {
+							if (
+								'err' in cause.error &&
+								typeof cause.error.err == 'object' &&
+								cause.error.err != null
+							) {
+								if ('status' in cause.error.err && typeof cause.error.err.status == 'number') {
+									if (cause.error.err.status == 401) {
+										this.appState = { state: 'unauthed' };
+										return;
+									}
+								}
+							}
+						}
+					}
 					this.appState = {
 						state: 'authed',
 						spreadsheetId,
