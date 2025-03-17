@@ -215,7 +215,6 @@
 						<button
 							class="button-1 outline blue"
 							onclick={() => {
-								debugger;
 								includedLines = [
 									[covSubject, statements.indexOf(s1) ?? 0],
 									[covSubject, statements.indexOf(s2) ?? 0]

@@ -1,5 +1,6 @@
 import { Effect, Either, Exit } from 'effect';
 import * as R from 'ramda';
+import * as Sentry from '@sentry/svelte';
 import { ensureAllSheetsExist, spreadsheetIdKey } from './sheetLogic.svelte';
 import { appendRow, type GoogleSheetId } from './googleSheetsWrapper';
 import { pickSpreadsheet } from './googleAuth.svelte';
@@ -217,6 +218,7 @@ class SortStore {
 					return true;
 				},
 				onFailure: (cause: unknown) => {
+					Sentry.captureException(cause);
 					if (typeof cause == 'object' && cause != null) {
 						if ('error' in cause && typeof cause.error == 'object' && cause.error != null) {
 							if (

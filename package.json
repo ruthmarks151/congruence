@@ -34,6 +34,7 @@
 	"type": "module",
 	"dependencies": {
 		"@observablehq/plot": "^0.6.16",
+		"@sentry/sveltekit": "^9.6.0",
 		"@types/gapi": "^0.0.47",
 		"@types/gapi.auth2": "^0.0.61",
 		"@types/gapi.client.drive": "^3.0.15",
