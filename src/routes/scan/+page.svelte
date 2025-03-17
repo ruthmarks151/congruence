@@ -281,7 +281,7 @@
 						onclick={() => addBinAt(binId - 1)}>＋</button
 					>
 					<h3 class="heading-3" style="margin: auto;">
-						Bin {binId + 1}
+						Bin {binId + 1} ({binContents.length})
 					</h3>
 					<button
 						class="button-1 filled green"
